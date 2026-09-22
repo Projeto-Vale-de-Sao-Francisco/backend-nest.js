@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model dispositivo {
+  dataCadastro   DateTime  @default(now()) @db.Timestamptz(6)
+  dataInstalacao DateTime? @db.Timestamptz(6)
+  id             Int       @id @default(autoincrement())
+  nome           String
+  status         String
+  talhaoId       Int
+  tipo           String
+  talhao         talhao    @relation(fields: [talhaoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medicao        medicao[]
+  sensor         sensor[]
+
+  @@index([talhaoId], map: "dispositivo_talhaoId_idx_2dcf07fd")
+}
+
+model medicao {
+  dataHora      DateTime    @db.Timestamptz(6)
+  dispositivoId Int
+  id            Int         @id @default(autoincrement())
+  temperatura   Decimal     @db.Decimal
+  umidade       Decimal     @db.Decimal
+  dispositivo   dispositivo @relation(fields: [dispositivoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([dispositivoId], map: "medicao_dispositivoId_idx_d98b2f4f")
+}
+
+model propriedade {
+  dataCadastro       DateTime             @default(now()) @db.Timestamptz(6)
+  id                 Int                  @id @default(autoincrement())
+  localizacao        String
+  nome               String
+  status             String
+  talhao             talhao[]
+  usuarioPropriedade usuarioPropriedade[]
+}
+
+model sensor {
+  dataCadastro  DateTime    @default(now()) @db.Timestamptz(6)
+  dispositivoId Int
+  id            Int         @id @default(autoincrement())
+  status        String
+  tipo          String
+  unidadeMedida String
+  dispositivo   dispositivo @relation(fields: [dispositivoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([dispositivoId], map: "sensor_dispositivoId_idx_d98b2f4f")
+}
+
+model talhao {
+  dataCadastro  DateTime      @default(now()) @db.Timestamptz(6)
+  descricao     String?
+  id            Int           @id @default(autoincrement())
+  nome          String
+  propriedadeId Int
+  status        String
+  dispositivo   dispositivo[]
+  propriedade   propriedade   @relation(fields: [propriedadeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([propriedadeId], map: "talhao_propriedadeId_idx_9894bbc4")
+}
+
+model usuario {
+  cpf                String               @unique
+  dataCadastro       DateTime             @default(now()) @db.Timestamptz(6)
+  email              String               @unique
+  id                 Int                  @id @default(autoincrement())
+  nomeCompleto       String
+  perfil             String
+  senha              String
+  status             String
+  usuarioPropriedade usuarioPropriedade[]
+}
+
+model usuarioPropriedade {
+  dataAssociacao DateTime    @default(now()) @db.Timestamptz(6)
+  id             Int         @id @default(autoincrement())
+  propriedadeId  Int
+  status         String
+  usuarioId      Int
+  propriedade    propriedade @relation(fields: [propriedadeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario        usuario     @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([propriedadeId], map: "usuarioPropriedade_propriedadeId_idx_9894bbc4")
+  @@index([usuarioId], map: "usuarioPropriedade_usuarioId_idx_5f01c7d6")
+}
