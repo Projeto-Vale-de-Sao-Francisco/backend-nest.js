@@ -61,10 +61,10 @@ export class ThingspeakService {
 
   const medicao = await this.prisma.medicao.create({
     data: {
-      dispositivoId: 1,
+      sensor_id: 1, // Atenção: Isso agora aponta para um Sensor, não Dispositivo
       temperatura,
       umidade,
-      dataHora,
+      data_hora: dataHora,
     },
   });
 
