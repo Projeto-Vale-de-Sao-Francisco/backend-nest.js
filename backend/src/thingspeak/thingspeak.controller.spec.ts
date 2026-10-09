@@ -7,7 +7,15 @@ describe('ThingspeakController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ThingspeakController],
-    }).compile();
+      providers: [
+        {
+          provide: 'ThingspeakService',
+          useValue: {},
+        },
+      ],
+    })
+      .useMocker(() => ({}))
+      .compile();
 
     controller = module.get<ThingspeakController>(ThingspeakController);
   });

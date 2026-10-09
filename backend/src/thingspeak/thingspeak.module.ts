@@ -4,6 +4,6 @@ import { ThingspeakController } from './thingspeak.controller.js';
 
 @Module({
   providers: [ThingspeakService],
-  controllers: [ThingspeakController]
+  controllers: [ThingspeakController],
 })
 export class ThingspeakModule {}
