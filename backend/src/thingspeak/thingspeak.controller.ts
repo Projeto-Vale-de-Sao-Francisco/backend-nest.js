@@ -16,20 +16,18 @@ export class ThingspeakController {
     );
   }
 
-    @Get('dados')
-    buscarDados() {
+  @Get('dados')
+  buscarDados() {
     return this.thingspeakService.buscarDados();
-
   }
 
-    @Get('dispositivos')
-    listarDispositivos() {
+  @Get('dispositivos')
+  listarDispositivos() {
     return this.thingspeakService.listarDispositivos();
-}
+  }
 
-    @Get('salvar')
-salvarUltimaMedicao() {
-  return this.thingspeakService.salvarUltimaMedicao();
-}
-
+  @Get('salvar')
+  salvarUltimaMedicao() {
+    return this.thingspeakService.salvarUltimaMedicao();
+  }
 }

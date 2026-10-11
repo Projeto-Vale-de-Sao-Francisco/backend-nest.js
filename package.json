@@ -1,0 +1,12 @@
+{
+  "name": "backend-nest-root",
+  "private": true,
+  "scripts": {
+    "start": "npm run start --prefix backend",
+    "start:dev": "npm run start:dev --prefix backend",
+    "simulator": "npm run simulator --prefix backend",
+    "build": "npm run build --prefix backend",
+    "test": "npm run test --prefix backend"
+  }
+}
+

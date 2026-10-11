@@ -6,8 +6,16 @@ describe('ThingspeakService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ThingspeakService],
-    }).compile();
+      providers: [
+        ThingspeakService,
+        {
+          provide: 'PrismaService',
+          useValue: {},
+        },
+      ],
+    })
+      .useMocker(() => ({}))
+      .compile();
 
     service = module.get<ThingspeakService>(ThingspeakService);
   });

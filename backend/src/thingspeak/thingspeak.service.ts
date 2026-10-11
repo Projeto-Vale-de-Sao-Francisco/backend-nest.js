@@ -47,31 +47,30 @@ export class ThingspeakService {
   }
 
   async salvarUltimaMedicao() {
-  const dados = await this.buscarDados();
+    const dados = await this.buscarDados();
 
-  const feed = dados.feeds[0];
+    const feed = dados.feeds[0];
 
-  if (!feed) {
-    throw new Error('Nenhuma medição encontrada no ThingSpeak.');
+    if (!feed) {
+      throw new Error('Nenhuma medição encontrada no ThingSpeak.');
+    }
+
+    const temperatura = Number(feed.field1);
+    const umidade = Number(feed.field2);
+    const dataHora = new Date(feed.created_at);
+
+    const medicao = await this.prisma.medicao.create({
+      data: {
+        sensor_id: 1,
+        temperatura,
+        umidade,
+        data_hora: dataHora,
+      },
+    });
+
+    return {
+      mensagem: 'Medição salva com sucesso!',
+      medicao,
+    };
   }
-
-  const temperatura = Number(feed.field1);
-  const umidade = Number(feed.field2);
-  const dataHora = new Date(feed.created_at);
-
-  const medicao = await this.prisma.medicao.create({
-    data: {
-      dispositivoId: 1,
-      temperatura,
-      umidade,
-      dataHora,
-    },
-  });
-
-  return {
-    mensagem: 'Medição salva com sucesso!',
-    medicao,
-  };
-}
-
 }
