@@ -5,6 +5,8 @@ import { ThingspeakModule } from './thingspeak/thingspeak.module.js';
 import { DevicesModule } from './devices/devices.module.js';
 import { AlertsModule } from './alerts/alerts.module.js';
 import { ReadingsModule } from './readings/readings.module.js';
+import { CompaniesModule } from './companies/companies.module.js';
+import { PropertiesModule } from './properties/properties.module.js';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { ReadingsModule } from './readings/readings.module.js';
     DevicesModule,
     AlertsModule,
     ReadingsModule,
+    CompaniesModule,
+    PropertiesModule,
   ],
 })
 export class AppModule {}

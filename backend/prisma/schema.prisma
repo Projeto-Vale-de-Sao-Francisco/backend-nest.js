@@ -82,8 +82,13 @@ model Empresa {
   cpf_cnpj      String   @unique
   telefone      String?
   email         String?
+  cidade        String?
+  estado        String?
+  responsavel   String?
   tipo          String
   status        String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   usuarios            Usuario_Empresa[]
   propriedades        Propriedade[]
@@ -106,7 +111,7 @@ model Usuario_Propriedade {
 }
 
 model Propriedade {
-  id         Int     @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   empresa_id Int
   nome       String
   municipio  String
@@ -115,6 +120,8 @@ model Propriedade {
   longitude  Float?
   area_total Float
   status     String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   empresa  Empresa               @relation(fields: [empresa_id], references: [id])
   usuarios Usuario_Propriedade[]
