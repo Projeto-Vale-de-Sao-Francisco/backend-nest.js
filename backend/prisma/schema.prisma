@@ -7,12 +7,22 @@ datasource db {
   provider = "postgresql"
 }
 
+enum TipoUsuario {
+  ADMIN
+  COMUM
+}
+
+enum StatusUsuario {
+  ATIVO
+  INATIVO
+}
+
 model Permissao {
-  id        Int                 @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   chave     String
   descricao String?
-  
-  usuarios  Usuario_Permissao[]
+
+  usuarios Usuario_Permissao[]
 }
 
 model Usuario_Permissao {
@@ -29,15 +39,18 @@ model Usuario_Permissao {
 }
 
 model Usuario {
-  id         Int      @id @default(autoincrement())
-  nome       String
-  cpf        String   @unique
-  email      String   @unique
-  senha_hash String
-  telefone   String?
-  perfil     String
-  status     String
-  created_at DateTime @default(now())
+  id           Int           @id @default(autoincrement())
+  nome         String
+  cpf          String        @unique
+  email        String        @unique
+  telefone     String
+  senha        String
+  tipo         TipoUsuario
+  vinculo      String
+  status       StatusUsuario @default(ATIVO)
+  tokenVersion Int           @default(0) @map("token_version")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
 
   permissoes           Usuario_Permissao[]   @relation("PossuiPermissao")
   permissoesConcedidas Usuario_Permissao[]   @relation("ConcedePermissao")
@@ -48,12 +61,12 @@ model Usuario {
 
 model Audit_Log {
   id           Int      @id @default(autoincrement())
-  usuario_id   Int?     
+  usuario_id   Int?
   acao         String
   recurso      String
   recurso_id   String?
   ip_origem    String?
-  dados_antes  Json?    
+  dados_antes  Json?
   dados_depois Json?
   criado_em    DateTime @default(now())
 
@@ -76,10 +89,10 @@ model Usuario_Empresa {
 }
 
 model Empresa {
-  id            Int      @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   razao_social  String
   nome_fantasia String?
-  cpf_cnpj      String   @unique
+  cpf_cnpj      String  @unique
   telefone      String?
   email         String?
   tipo          String
@@ -106,7 +119,7 @@ model Usuario_Propriedade {
 }
 
 model Propriedade {
-  id         Int     @id @default(autoincrement())
+  id         Int    @id @default(autoincrement())
   empresa_id Int
   nome       String
   municipio  String
@@ -125,7 +138,7 @@ model Propriedade {
 }
 
 model Talhao {
-  id             Int     @id @default(autoincrement())
+  id             Int    @id @default(autoincrement())
   propriedade_id Int
   nome           String
   area           Float
@@ -176,7 +189,7 @@ model Valor_Mercado {
   data_referencia  DateTime
   mercado_destino  String
   pais_destino     String
-  preco            Decimal  // Alterado de Float para Decimal para valores monetários
+  preco            Decimal // Alterado de Float para Decimal para valores monetários
   moeda            String
   unidade_medida   String
   demanda_estimada Float?
@@ -275,14 +288,14 @@ model Sensor {
 }
 
 model Medicao {
-  id             Int      @id @default(autoincrement())
-  sensor_id      Int      // O dispositivo é agora inferido através do sensor
-  data_hora      DateTime
-  temperatura    Float?
-  umidade        Float?
-  umidade_solo   Float?
-  luminosidade   Float?
-  precipitacao   Float?
+  id           Int      @id @default(autoincrement())
+  sensor_id    Int // O dispositivo é agora inferido através do sensor
+  data_hora    DateTime
+  temperatura  Float?
+  umidade      Float?
+  umidade_solo Float?
+  luminosidade Float?
+  precipitacao Float?
 
   sensor  Sensor   @relation(fields: [sensor_id], references: [id])
   alertas Alerta[]
