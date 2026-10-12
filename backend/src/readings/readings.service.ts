@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AlertsService } from '../alerts/alerts.service.js';
@@ -20,48 +21,61 @@ export class ReadingsService {
   async create(dto: CreateReadingDto) {
     this.validatePlausibility(dto);
 
-    const sensor = await this.resolveAndValidateSensor(dto);
+    try {
+      const sensor = await this.resolveAndValidateSensor(dto);
 
-    const dataHora = dto.dataHora ? new Date(dto.dataHora) : new Date();
-    if (Number.isNaN(dataHora.getTime())) {
-      throw new BadRequestException('Data/hora da leitura inválida.');
-    }
+      const dataHora = dto.dataHora ? new Date(dto.dataHora) : new Date();
+      if (Number.isNaN(dataHora.getTime())) {
+        throw new BadRequestException('Data/hora da leitura inválida.');
+      }
 
-    const medicao = await this.prisma.medicao.create({
-      data: {
-        sensor_id: sensor.id,
-        data_hora: dataHora,
-        temperatura: dto.temperatura,
-        umidade: dto.umidade,
-        umidade_solo: dto.umidadeSolo ?? null,
-        luminosidade: dto.luminosidade ?? null,
-        precipitacao: dto.precipitacao ?? null,
-      },
-      include: {
-        sensor: {
-          include: {
-            dispositivo: {
-              include: {
-                talhao: true,
+      const medicao = await this.prisma.medicao.create({
+        data: {
+          sensor_id: sensor.id,
+          data_hora: dataHora,
+          temperatura: dto.temperatura,
+          umidade: dto.umidade,
+          umidade_solo: dto.umidadeSolo ?? null,
+          luminosidade: dto.luminosidade ?? null,
+          precipitacao: dto.precipitacao ?? null,
+          pressao: dto.pressao ?? null,
+        },
+        include: {
+          sensor: {
+            include: {
+              dispositivo: {
+                include: {
+                  talhao: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    // Requisito 9.1: Processa alertas climáticos automaticamente
-    const alertas = await this.alertsService.checkAndCreateAlerts(
-      medicao.id,
-      sensor.id,
-    );
+      // Requisito 9.1: Processa alertas climáticos automaticamente
+      const alertas = await this.alertsService.checkAndCreateAlerts(
+        medicao.id,
+        sensor.id,
+      );
 
-    return {
-      sucesso: true,
-      mensagem: 'Leitura registrada com sucesso.',
-      medicao,
-      alertasGerados: alertas,
-    };
+      return {
+        sucesso: true,
+        mensagem: 'Leitura registrada com sucesso.',
+        medicao,
+        alertasGerados: alertas,
+      };
+    } catch (error: any) {
+      if (
+        error?.code === 'ECONNREFUSED' ||
+        error?.message?.includes('ECONNREFUSED')
+      ) {
+        throw new ServiceUnavailableException(
+          'Banco de dados PostgreSQL (localhost:5432) indisponível. Inicie o PostgreSQL para gravar medições locais.',
+        );
+      }
+      throw error;
+    }
   }
 
   /**
@@ -192,6 +206,11 @@ export class ReadingsService {
           `Sensor com ID ${dto.sensorId} não encontrado.`,
         );
       }
+      if (sensor.dispositivo.status !== 'ativo') {
+        throw new BadRequestException(
+          'Dispositivo inativo. Leituras rejeitadas.',
+        );
+      }
     } else if (dto.codigoDispositivo) {
       const dispositivo = await this.prisma.dispositivo.findUnique({
         where: { codigo: dto.codigoDispositivo.trim() },
@@ -216,16 +235,9 @@ export class ReadingsService {
       sensor = dispositivo.sensores.find((s) => s.status === 'ativo') ?? null;
 
       if (!sensor) {
-        // Se ainda não existir sensor criado para o dispositivo, cria um padrão
-        sensor = await this.prisma.sensor.create({
-          data: {
-            dispositivo_id: dispositivo.id,
-            tipo: 'temperatura_umidade',
-            unidade_medida: '°C, %',
-            status: 'ativo',
-          },
-          include: { dispositivo: true },
-        });
+        throw new BadRequestException(
+          'Dispositivo sem sensor ativo. Ative o sensor antes de enviar leituras.',
+        );
       }
     }
 

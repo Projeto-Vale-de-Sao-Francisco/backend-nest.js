@@ -23,6 +23,8 @@ describe('DevicesService', () => {
       },
     };
 
+    prismaMock.$transaction = vi.fn(async (callback) => callback(prismaMock));
+
     service = new DevicesService(prismaMock as unknown as PrismaService);
   });
 

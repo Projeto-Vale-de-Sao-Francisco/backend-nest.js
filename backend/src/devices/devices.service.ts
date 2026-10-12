@@ -149,34 +149,24 @@ export class DevicesService {
    * Atualiza o status do dispositivo e reflete nos seus sensores vinculados.
    */
   async updateStatus(id: number, status: 'ativo' | 'inativo') {
-    const device = await this.prisma.dispositivo.findUnique({
-      where: { id },
-    });
-
-    if (!device) {
-      throw new NotFoundException(`Dispositivo com id ${id} não encontrado.`);
-    }
-
     const normalizedStatus = this.normalizeStatus(status);
-
-    await this.prisma.sensor.updateMany({
-      where: { dispositivo_id: id },
-      data: { status: normalizedStatus },
-    });
-
-    return this.prisma.dispositivo.update({
-      where: { id },
-      data: {
-        status: normalizedStatus,
-      },
-      include: {
-        talhao: {
-          include: {
-            propriedade: true,
-          },
+    return this.prisma.$transaction(async (tx) => {
+      const device = await tx.dispositivo.findUnique({ where: { id } });
+      if (!device) {
+        throw new NotFoundException(`Dispositivo com id ${id} não encontrado.`);
+      }
+      await tx.sensor.updateMany({
+        where: { dispositivo_id: id },
+        data: { status: normalizedStatus },
+      });
+      return tx.dispositivo.update({
+        where: { id },
+        data: { status: normalizedStatus },
+        include: {
+          talhao: { include: { propriedade: true } },
+          sensores: true,
         },
-        sensores: true,
-      },
+      });
     });
   }
 
@@ -201,6 +191,11 @@ export class DevicesService {
    * Padroniza o status para manter o sistema consistente.
    */
   private normalizeStatus(status: string): 'ativo' | 'inativo' {
+    if (typeof status !== 'string') {
+      throw new BadRequestException(
+        'Status obrigatório. Use ativo ou inativo.',
+      );
+    }
     const normalized = status.toLowerCase().trim();
 
     if (normalized === 'ativo' || normalized === 'inativo') {
