@@ -20,7 +20,8 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
-    "simulator": "tsx src/simulator/simulator.ts"
+    "simulator": "tsx src/simulator/simulator.ts",
+    "simulator:thingspeak": "tsx src/simulator/simulator.ts --only-thingspeak"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AlertsService } from '../alerts/alerts.service.js';
@@ -20,48 +21,60 @@ export class ReadingsService {
   async create(dto: CreateReadingDto) {
     this.validatePlausibility(dto);
 
-    const sensor = await this.resolveAndValidateSensor(dto);
+    try {
+      const sensor = await this.resolveAndValidateSensor(dto);
 
-    const dataHora = dto.dataHora ? new Date(dto.dataHora) : new Date();
-    if (Number.isNaN(dataHora.getTime())) {
-      throw new BadRequestException('Data/hora da leitura inválida.');
-    }
+      const dataHora = dto.dataHora ? new Date(dto.dataHora) : new Date();
+      if (Number.isNaN(dataHora.getTime())) {
+        throw new BadRequestException('Data/hora da leitura inválida.');
+      }
 
-    const medicao = await this.prisma.medicao.create({
-      data: {
-        sensor_id: sensor.id,
-        data_hora: dataHora,
-        temperatura: dto.temperatura,
-        umidade: dto.umidade,
-        umidade_solo: dto.umidadeSolo ?? null,
-        luminosidade: dto.luminosidade ?? null,
-        precipitacao: dto.precipitacao ?? null,
-      },
-      include: {
-        sensor: {
-          include: {
-            dispositivo: {
-              include: {
-                talhao: true,
+      const medicao = await this.prisma.medicao.create({
+        data: {
+          sensor_id: sensor.id,
+          data_hora: dataHora,
+          temperatura: dto.temperatura,
+          umidade: dto.umidade,
+          umidade_solo: dto.umidadeSolo ?? null,
+          luminosidade: dto.luminosidade ?? null,
+          precipitacao: dto.precipitacao ?? null,
+        },
+        include: {
+          sensor: {
+            include: {
+              dispositivo: {
+                include: {
+                  talhao: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    // Requisito 9.1: Processa alertas climáticos automaticamente
-    const alertas = await this.alertsService.checkAndCreateAlerts(
-      medicao.id,
-      sensor.id,
-    );
+      // Requisito 9.1: Processa alertas climáticos automaticamente
+      const alertas = await this.alertsService.checkAndCreateAlerts(
+        medicao.id,
+        sensor.id,
+      );
 
-    return {
-      sucesso: true,
-      mensagem: 'Leitura registrada com sucesso.',
-      medicao,
-      alertasGerados: alertas,
-    };
+      return {
+        sucesso: true,
+        mensagem: 'Leitura registrada com sucesso.',
+        medicao,
+        alertasGerados: alertas,
+      };
+    } catch (error: any) {
+      if (
+        error?.code === 'ECONNREFUSED' ||
+        error?.message?.includes('ECONNREFUSED')
+      ) {
+        throw new ServiceUnavailableException(
+          'Banco de dados PostgreSQL (localhost:5432) indisponível. Inicie o PostgreSQL para gravar medições locais.',
+        );
+      }
+      throw error;
+    }
   }
 
   /**
