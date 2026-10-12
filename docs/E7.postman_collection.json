@@ -1,0 +1,1220 @@
+{
+  "info": {
+    "name": "E7 — Mercado / Etapa A",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Requests reais da Etapa A, em ordem. Preencha credenciais locais e culturaId com o id de Manga ou Uva fresca impresso pelo seed-demo. baseUrl padrão: http://localhost:3001; ajuste à PORT da API. Não há segredos exportados. ADMIN e COMUM devem existir e estar ATIVOS; seed-demo não cria usuários. Scripts pm.test validam status no Postman; logins salvam accessToken em token/tokenComum e cadastro salva id em mercadoId. A execução desses scripts não é garantida no Thunder Client: copie accessToken e id manualmente para as variáveis e confira status/corpo. Execute uma pasta/request por vez. Atualizações dependem da disponibilidade da fonte: sem dados e em falha podem retornar 502; o teste cache exige consulta anterior bem-sucedida e TTL vigente. Cadastro manual retorna 201 só na primeira execução da chave; ajuste a mesma data em cadastro e repetição para uma nova rodada. Antes do erro Cultura 9999, confirme no Studio que esse id não existe. Os POST gravam dados no banco compartilhado. Não há requests de CSV, logística ou resumo."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminSenha",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "comumEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "comumSenha",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenComum",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "culturaId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "mercadoId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticação",
+      "item": [
+        {
+          "name": "[200] Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Usa usuário admin existente e ATIVO. Postman salva accessToken em token. No Thunder Client, se scripts pm.* não rodarem, copie accessToken da resposta e preencha manualmente token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.test('accessToken presente', function () { pm.expect(data.accessToken).to.be.a('string').and.not.empty; });",
+                  "  if (typeof data.accessToken === 'string' && data.accessToken) pm.collectionVariables.set('token', data.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200] Login comum",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Usa usuário comum existente e ATIVO. Postman salva accessToken em tokenComum. No Thunder Client, se scripts pm.* não rodarem, copie accessToken da resposta e preencha manualmente tokenComum.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{comumEmail}}\",\n  \"senha\": \"{{comumSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.test('accessToken presente', function () { pm.expect(data.accessToken).to.be.a('string').and.not.empty; });",
+                  "  if (typeof data.accessToken === 'string' && data.accessToken) pm.collectionVariables.set('tokenComum', data.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Fontes e atualização (ADMIN)",
+      "item": [
+        {
+          "name": "[200] Listar fontes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/fontes",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "fontes"]
+            },
+            "description": "Lista ativação e diagnósticos em memória das fontes."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200] Atualizar mercado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/atualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "atualizar"]
+            },
+            "description": "Consulta Comex Stat e grava dados reais. Primeira consulta sem cache deve retornar atualizada; dados existentes permitem fallback 200. Sem dados e com falha externa pode retornar 502.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"fonte\": \"comexstat\",\n  \"forcar\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200, cache] Repetir atualização",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/atualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "atualizar"]
+            },
+            "description": "Execute imediatamente após uma atualização bem-sucedida, dentro do TTL e sem reiniciar a API. Falha anterior não publica cache.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"fonte\": \"comexstat\",\n  \"forcar\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('Comex Stat em cache, sem nova gravação', function () {",
+                  "    const fonte = pm.response.json().fontes.find(item => item.id === 'comexstat');",
+                  "    pm.expect(fonte).to.be.an('object'); pm.expect(fonte.status).to.eql('cache'); pm.expect(fonte.registros_gravados).to.eql(0);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200] Forçar atualização ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/atualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "atualizar"]
+            },
+            "description": "ADMIN ignora TTL; respeita Retry-After. Se fonte falhar sem registros armazenados, retorna 502 em vez de 200.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"fonte\": \"comexstat\",\n  \"forcar\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200] Consultar cotação",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/cotacao?cultura_id={{culturaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "cotacao"],
+              "query": [
+                {
+                  "key": "cultura_id",
+                  "value": "{{culturaId}}"
+                }
+              ]
+            },
+            "description": "Último registro gravado por país. Conversão PTAX pode ser null. Não atualiza Comex Stat."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Cadastro e listagem (ADMIN)",
+      "item": [
+        {
+          "name": "[201] Cadastrar mercado manual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"]
+            },
+            "description": "Cria Teste Manual e guarda id em mercadoId. Execute uma vez por chave; em nova rodada altere data_referencia aqui e na repetição. Thunder Client: copie id manualmente se scripts não forem executados.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"mercado_destino\": \"Teste Manual\",\n  \"pais_destino\": \"Brasil\",\n  \"preco\": \"2.35\",\n  \"moeda\": \"usd\",\n  \"unidade_medida\": \"kg\",\n  \"data_referencia\": \"2026-10-01\",\n  \"demanda_estimada\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  pm.test('Id retornado', function () { pm.expect(data.id).to.be.a('number'); });",
+                  "  if (Number.isInteger(data.id)) pm.collectionVariables.set('mercadoId', String(data.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[409] Repetir cadastro manual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"]
+            },
+            "description": "Mesma cultura, destino e data da request anterior; não sobrescreve.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"mercado_destino\": \"Teste Manual\",\n  \"pais_destino\": \"Brasil\",\n  \"preco\": \"2.35\",\n  \"moeda\": \"usd\",\n  \"unidade_medida\": \"kg\",\n  \"data_referencia\": \"2026-10-01\",\n  \"demanda_estimada\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200] Listar mercado paginado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Lista registros com paginação e nome da cultura."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200] Listar mercado com filtros",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado?cultura_id={{culturaId}}&mercado_destino=Teste%20Manual&data_inicio=2026-01-01&data_fim=2026-12-31&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"],
+              "query": [
+                {
+                  "key": "cultura_id",
+                  "value": "{{culturaId}}"
+                },
+                {
+                  "key": "mercado_destino",
+                  "value": "Teste Manual"
+                },
+                {
+                  "key": "data_inicio",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "data_fim",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Filtra cultura, destino parcial e período inclusivo."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200] Consultar registro pelo id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/{{mercadoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "{{mercadoId}}"]
+            },
+            "description": "Preencha mercadoId com o id retornado no cadastro."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Erros esperados",
+      "item": [
+        {
+          "name": "[404] Registro inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/2147483647",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "2147483647"]
+            },
+            "description": "Pressupõe que o id 2147483647 não existe."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[400] Datas invertidas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado?data_inicio=2026-12-31&data_fim=2026-01-01",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"],
+              "query": [
+                {
+                  "key": "data_inicio",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "data_fim",
+                  "value": "2026-01-01"
+                }
+              ]
+            },
+            "description": "Início posterior ao fim."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[400] Limite acima de 100",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado?limit=101",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "101"
+                }
+              ]
+            },
+            "description": "Máximo permitido: 100."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[400] Cotação sem cultura",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/cotacao",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "cotacao"]
+            },
+            "description": "cultura_id é obrigatório."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[404] Cadastro com cultura inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"]
+            },
+            "description": "Pressupõe que Cultura 9999 não existe. Se existir, esta request poderá criar um registro; confira no Studio antes de enviar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": 9999,\n  \"mercado_destino\": \"Teste Manual\",\n  \"pais_destino\": \"Brasil\",\n  \"preco\": \"2.35\",\n  \"moeda\": \"usd\",\n  \"unidade_medida\": \"kg\",\n  \"data_referencia\": \"2026-10-01\",\n  \"demanda_estimada\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[400] Preço negativo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"]
+            },
+            "description": "Preço deve ser positivo, rejeitado antes da gravação.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"mercado_destino\": \"Teste Manual\",\n  \"pais_destino\": \"Brasil\",\n  \"preco\": \"-2.35\",\n  \"moeda\": \"usd\",\n  \"unidade_medida\": \"kg\",\n  \"data_referencia\": \"2026-10-01\",\n  \"demanda_estimada\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[400] Fonte inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/atualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "atualizar"]
+            },
+            "description": "Cultura deve existir; fonte não registrada é rejeitada.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"fonte\": \"inexistente\",\n  \"forcar\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[400] Forçar como texto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/atualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "atualizar"]
+            },
+            "description": "DTO exige booleano; texto true não é convertido.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"fonte\": \"comexstat\",\n  \"forcar\": \"true\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[401] Fontes sem token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/fontes",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "fontes"]
+            },
+            "description": "Request usa noauth explicitamente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Usuário comum",
+      "item": [
+        {
+          "name": "[200] COMUM listar mercado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenComum}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"]
+            },
+            "description": "Usuário comum pode consultar dados."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[200] COMUM atualizar sem forçar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenComum}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/atualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "atualizar"]
+            },
+            "description": "Autenticado pode atualizar; cache/fallback se aplicável. Sem registros e com fonte indisponível pode retornar 502.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"fonte\": \"comexstat\",\n  \"forcar\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[403] COMUM forçar atualização",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenComum}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado/atualizar",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado", "atualizar"]
+            },
+            "description": "Bloqueado antes de consultar a fonte.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"fonte\": \"comexstat\",\n  \"forcar\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "[403] COMUM cadastrar mercado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenComum}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/mercado",
+              "host": ["{{baseUrl}}"],
+              "path": ["mercado"]
+            },
+            "description": "Cadastro manual exige ADMIN.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cultura_id\": {{culturaId}},\n  \"mercado_destino\": \"Teste Manual\",\n  \"pais_destino\": \"Brasil\",\n  \"preco\": \"2.35\",\n  \"moeda\": \"usd\",\n  \"unidade_medida\": \"kg\",\n  \"data_referencia\": \"2026-10-01\",\n  \"demanda_estimada\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

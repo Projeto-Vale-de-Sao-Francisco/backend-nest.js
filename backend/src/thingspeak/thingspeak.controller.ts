@@ -1,4 +1,7 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Roles } from '../auth/decorators/roles.decorator.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { ThingspeakService } from './thingspeak.service.js';
 
 @Controller('thingspeak')
@@ -27,6 +30,8 @@ export class ThingspeakController {
   }
 
   @Get('salvar')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   salvarUltimaMedicao() {
     return this.thingspeakService.salvarUltimaMedicao();
   }
