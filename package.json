@@ -1,12 +1,22 @@
 {
   "name": "backend-nest-root",
+  "type": "module",
   "private": true,
   "scripts": {
     "start": "npm run start --prefix backend",
     "start:dev": "npm run start:dev --prefix backend",
     "simulator": "npm run simulator --prefix backend",
     "build": "npm run build --prefix backend",
-    "test": "npm run test --prefix backend"
+    "test": "npm run test --prefix backend",
+    "contract:emit": "prisma contract emit"
+  },
+  "dependencies": {
+    "@prisma/orm-postgres": "^8.0.0-rc.17",
+    "dotenv": "^18.0.7"
+  },
+  "devDependencies": {
+    "@prisma/cli-engine": "^0.7.0",
+    "@types/node": "^26.6.5",
+    "prisma": "^8.0.0-rc.22"
   }
 }
-

@@ -115,6 +115,45 @@ O sistema diferencia **Dispositivo** (hardware físico fixado no talhão) de **S
    - `PATCH /alerts/:id/view`: Marca como visto (`visualizado: true`).
    - `PATCH /alerts/:id/resolve`: Marca como resolvido (`status: 'resolvido'`).
 
+### 🧑‍🌾 Épico 3: Produtores/Empresas e Propriedades
+
+As rotas privadas de empresas/produtores (`/empresas`, `/companies`, `/produtores`, `/producers`) e propriedades (`/propriedades`, `/properties`) usam `PrincipalGuard`. O guard exige `request.user.id` de um middleware de autenticação confiável e valida se o usuário existe e está ativo. A autorização dos serviços usa as permissões e vínculos existentes no banco; os identificadores enviados na URL não concedem acesso por si só.
+
+> **Bloqueio de produção:** este repositório ainda não implementa login, validação de token nem middleware que atribua a identidade confiável a `request.user`. Portanto, na aplicação atual, as rotas protegidas respondem `401` quando não recebem essa identidade. Não exponha as rotas a usuários reais ou à internet até integrar e validar um provedor de autenticação confiável; não é suficiente enviar um `userId` no payload ou cabeçalho.
+
+Permissões reconhecidas em `Permissao.chave`:
+
+| Chave | Alcance |
+| --- | --- |
+| `epic3:admin` | Administração ampla de empresas, propriedades, associações e leitura de documentos |
+| `empresas:ler` | Leitura global de empresas/produtores |
+| `empresas:gerenciar` | Criação, edição e inativação de empresas/produtores |
+| `empresas:associar` | Gerenciamento de vínculos de usuários a empresas dentro do escopo autorizado |
+| `empresas:documento:ler` | Leitura completa de CPF/CNPJ |
+| `propriedades:ler` | Leitura global de propriedades e consulta de propriedades de outros usuários |
+| `propriedades:gerenciar` | Criação, edição e inativação de propriedades |
+| `propriedades:associar` | Gerenciamento de vínculos de usuários a propriedades dentro do escopo autorizado |
+
+Sem permissão global de leitura/gerenciamento, o escopo é limitado aos vínculos ativos do usuário com empresas e propriedades. Operações de associação exigem a permissão específica e acesso ao registro relacionado. CPF/CNPJ é mascarado nas listagens, detalhes e respostas de associação; a permissão `empresas:documento:ler` é necessária para revelar o valor completo. Projeções de usuários vinculados omitem CPF, senha/hash e demais credenciais.
+
+Rotas de associação:
+
+| Método e rota | Ação |
+| --- | --- |
+| `GET /empresas/:id/usuarios` | Lista vínculos ativos e dados públicos dos usuários |
+| `GET /empresas/:id/usuarios/disponiveis` | Lista usuários ativos ainda não vinculados |
+| `POST /empresas/:id/usuarios` | Cria ou reativa um vínculo, com chave única por usuário/empresa |
+| `DELETE /empresas/:id/usuarios/:userId` | Inativa o vínculo sem apagar o histórico |
+| `GET /propriedades/:id/usuarios` | Lista vínculos ativos e dados públicos dos usuários |
+| `GET /propriedades/:id/usuarios/disponiveis` | Lista usuários ativos ainda não vinculados |
+| `POST /propriedades/:id/usuarios` | Cria ou reativa um vínculo, com chave única por usuário/propriedade |
+| `DELETE /propriedades/:id/usuarios/:userId` | Inativa o vínculo sem apagar o histórico |
+| `GET /propriedades/por-usuario/:userId` | Lista propriedades vinculadas ao próprio usuário; consultar outro usuário exige `propriedades:ler` ou `epic3:admin` |
+
+As rotas existentes `GET /:id/associacoes` e `POST /:id/associacoes` continuam como aliases para consulta/criação de vínculo. Os mesmos endpoints estão disponíveis sob os aliases de idioma inglês já adotados pelos controllers.
+
+Listagens de empresas/produtores e propriedades aceitam `page` e `limit`: página padrão `1`, tamanho padrão `20` e limite máximo `100`. Valores não inteiros, zero, negativos ou acima do máximo retornam `400`. A resposta tem o formato `{ "data": [], "meta": { "page": 1, "limit": 20, "total": 0, "totalPages": 0 } }`; filtros existentes são mantidos e aplicados no banco junto ao escopo de autorização.
+
 ---
 
 ## 🧹 3. Boas Práticas e Clean Code Aplicadas
@@ -190,4 +229,3 @@ npm run format    # Aplica a formatação do Prettier
 npm test          # Executa todos os testes unitários
 npm run build     # Confirma se o build TypeScript está íntegro
 ```
-
