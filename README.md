@@ -182,3 +182,7 @@ http://localhost:3000
   Desenvolvido para o <strong>Projeto Vale São Francisco</strong>
 </p>
 
+
+## E7 — Mercado (Etapa A)
+
+Cadastro, filtros e valor médio de exportação via Comex Stat, com conversão PTAX. Consulte [ENDPOINTS-E7.md](ENDPOINTS-E7.md) para requests em ordem, permissões e criação manual de Cultura pelo Prisma Studio. Configuração, arquitetura e limitações estão no [README do backend](backend/README.md#e7--mercado-etapa-a) e em [backend/.env.example](backend/.env.example). Esta etapa não exige mudança de schema, migration ou seed. CSV, logística e resumo ainda não foram implementados.
