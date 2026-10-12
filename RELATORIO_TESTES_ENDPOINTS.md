@@ -1,5 +1,9 @@
 # Resultado dos testes dos endpoints — 12/10/2026
 
+## Integração com a main
+
+A migração inicial duplicada 20261012000000_baseline foi substituída pela migração inicial oficial da main, 20261011224616_init. A migração de pressão permanece. Para bancos locais que já registraram a baseline antiga, é necessário reconciliar o histórico e o schema de usuários antes de executar migrate deploy; não execute o SQL inicial sobre tabelas existentes.
+
 ## Verificação após as correções
 
 **54 verificações HTTP aprovadas, sem divergências**, na API local com banco real.

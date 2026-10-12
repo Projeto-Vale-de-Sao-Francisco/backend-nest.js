@@ -1,6 +1,6 @@
 # Guia rápido da API para o frontend
 
-Base local: `http://localhost:3000` (ou a porta definida em `PORT`). As rotas não têm prefixo `/api`.
+Base local: `http://localhost:3000` (ou a porta definida em `PORT`). As rotas não têm prefixo `/api`. Configure `JWT_SECRET` no ambiente do backend para iniciar a versão integrada com a main.
 
 Envie corpos JSON com `Content-Type: application/json`. Corpos com campos desconhecidos ou tipos incorretos são rejeitados com HTTP 400. IDs e valores de medições devem ser números; datas devem usar ISO 8601, por exemplo `2026-10-12T12:00:00.000Z`.
 
@@ -156,7 +156,7 @@ Erros tratados seguem o formato `{ statusCode, message, error }`.
 | 503 | Conexão recusada pelo banco ao registrar leitura. |
 | 500 | Falha interna não tratada. |
 
-O backend atualmente não habilita CORS em `backend/src/main.ts`. Para chamar de outra origem no navegador, configure um proxy no frontend ou habilite CORS no backend. As demais rotas acima não possuem autenticação implementada. Não há endpoints de login, propriedades ou talhões; os IDs vêm de dados já existentes, e as relações podem ser consultadas em `/devices`.
+O backend atualmente não habilita CORS em `backend/src/main.ts`. Para chamar de outra origem no navegador, configure um proxy no frontend ou habilite CORS no backend. As demais rotas acima não possuem autenticação implementada. A main adicionou endpoints de autenticação e usuários, fora do escopo deste guia IoT. Não há endpoints de propriedades ou talhões; os IDs vêm de dados já existentes, e as relações podem ser consultadas em `/devices`.
 
 ## Integração ThingSpeak
 

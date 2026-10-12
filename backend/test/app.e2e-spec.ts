@@ -22,6 +22,7 @@ describe('API contracts (e2e)', () => {
       .useValue({})
       .overrideProvider(ConfigService)
       .useValue({
+        getOrThrow: () => 'test-jwt-secret',
         get: (key: string) =>
           key === 'DEVICE_API_KEY' ? 'test-key' : undefined,
       })

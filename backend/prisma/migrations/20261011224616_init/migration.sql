@@ -1,5 +1,8 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
+-- CreateEnum
+CREATE TYPE "TipoUsuario" AS ENUM ('ADMIN', 'COMUM');
+
+-- CreateEnum
+CREATE TYPE "StatusUsuario" AS ENUM ('ATIVO', 'INATIVO');
 
 -- CreateTable
 CREATE TABLE "Permissao" (
@@ -26,11 +29,14 @@ CREATE TABLE "Usuario" (
     "nome" TEXT NOT NULL,
     "cpf" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "senha_hash" TEXT NOT NULL,
-    "telefone" TEXT,
-    "perfil" TEXT NOT NULL,
-    "status" TEXT NOT NULL,
+    "telefone" TEXT NOT NULL,
+    "senha" TEXT NOT NULL,
+    "tipo" "TipoUsuario" NOT NULL,
+    "vinculo" TEXT NOT NULL,
+    "status" "StatusUsuario" NOT NULL DEFAULT 'ATIVO',
+    "token_version" INTEGER NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Usuario_pkey" PRIMARY KEY ("id")
 );

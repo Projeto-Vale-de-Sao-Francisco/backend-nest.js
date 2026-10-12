@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { PrismaPg } from '@prisma/adapter-pg';
+import * as bcrypt from 'bcrypt';
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL as string,
@@ -8,8 +9,49 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
+function getSeedAdminEnv(nome: string): string {
+  const valor = process.env[nome]?.trim();
+  if (!valor) {
+    throw new Error(`A variável ${nome} é obrigatória para criar o administrador inicial.`);
+  }
+  return valor;
+}
+
+async function criarAdministradorInicial() {
+  const nome = getSeedAdminEnv('SEED_ADMIN_NOME');
+  const email = getSeedAdminEnv('SEED_ADMIN_EMAIL').toLowerCase();
+  const senha = getSeedAdminEnv('SEED_ADMIN_SENHA');
+  const cpf = getSeedAdminEnv('SEED_ADMIN_CPF').replace(/\D/g, '');
+  const telefone = (process.env.SEED_ADMIN_TELEFONE ?? '0000000000').replace(/\D/g, '');
+  const vinculo = process.env.SEED_ADMIN_VINCULO?.trim() || 'Administração';
+
+  const existente = await prisma.usuario.findUnique({ where: { email } });
+  if (existente) {
+    console.log('Administrador inicial já existe.');
+    return;
+  }
+
+  const senhaHash = await bcrypt.hash(senha, 12);
+  await prisma.usuario.create({
+    data: {
+      nome,
+      email,
+      cpf,
+      telefone,
+      senha: senhaHash,
+      tipo: 'ADMIN',
+      vinculo,
+      status: 'ATIVO',
+    },
+  });
+
+  console.log('Administrador inicial criado.');
+}
+
 async function main() {
   console.log('Populando dados iniciais para testes (seed)...');
+
+  await criarAdministradorInicial();
 
   // 1. Empresa
   const empresa = await prisma.empresa.upsert({
