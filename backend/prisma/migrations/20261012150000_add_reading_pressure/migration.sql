@@ -1,0 +1,1 @@
+ALTER TABLE "Medicao" ADD COLUMN "pressao" DOUBLE PRECISION;

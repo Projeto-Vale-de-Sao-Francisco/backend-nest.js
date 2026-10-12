@@ -101,6 +101,55 @@ describe('ReadingsService', () => {
     });
   });
 
+  it('rejeita dispositivo inativo mesmo com sensor ativo', async () => {
+    prismaMock.sensor.findUnique.mockResolvedValue({
+      id: 1,
+      status: 'ativo',
+      dispositivo: { status: 'inativo' },
+    });
+    await expect(
+      service.create({ sensorId: 1, temperatura: 25, umidade: 60 }),
+    ).rejects.toThrow(BadRequestException);
+    expect(prismaMock.medicao.create).not.toHaveBeenCalled();
+  });
+
+  it('não cria sensor substituto quando os sensores estão inativos', async () => {
+    prismaMock.dispositivo.findUnique.mockResolvedValue({
+      id: 1,
+      status: 'ativo',
+      sensores: [{ id: 1, status: 'inativo' }],
+    });
+    await expect(
+      service.create({
+        codigoDispositivo: 'TEST',
+        temperatura: 25,
+        umidade: 60,
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(prismaMock.sensor.create).not.toHaveBeenCalled();
+    expect(prismaMock.medicao.create).not.toHaveBeenCalled();
+  });
+
+  it('persiste pressão atmosférica', async () => {
+    prismaMock.sensor.findUnique.mockResolvedValue({
+      id: 1,
+      status: 'ativo',
+      dispositivo: { status: 'ativo' },
+    });
+    prismaMock.medicao.create.mockResolvedValue({ id: 1 });
+    await service.create({
+      sensorId: 1,
+      temperatura: 25,
+      umidade: 60,
+      pressao: 1013,
+    });
+    expect(prismaMock.medicao.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ pressao: 1013 }),
+      }),
+    );
+  });
+
   describe('findLatestReadings (Requisito 6.5)', () => {
     it('deve retornar sensores associados à sua última medição', async () => {
       prismaMock.sensor.findMany.mockResolvedValue([

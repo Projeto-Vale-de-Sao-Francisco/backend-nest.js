@@ -1,4 +1,5 @@
 import {
+  ValidationPipe,
   Body,
   Controller,
   Get,
@@ -10,6 +11,10 @@ import {
 } from '@nestjs/common';
 import { CreateDeviceDto } from './dto/create-device.dto.js';
 import { UpdateDeviceStatusDto } from './dto/update-device-status.dto.js';
+import {
+  optionalPositiveInt,
+  optionalStatus,
+} from '../common/query-validation.js';
 import { DevicesService } from './devices.service.js';
 
 @Controller('devices')
@@ -20,7 +25,16 @@ export class DevicesController {
    * Cadastro de novo dispositivo/sensor.
    */
   @Post()
-  create(@Body() dto: CreateDeviceDto) {
+  create(
+    @Body(
+      new ValidationPipe({
+        expectedType: CreateDeviceDto,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    )
+    dto: CreateDeviceDto,
+  ) {
     return this.devicesService.create(dto);
   }
 
@@ -36,9 +50,9 @@ export class DevicesController {
   ) {
     const selectedTalhao = talhaoId ?? lote;
     return this.devicesService.findAll({
-      propriedadeId: propriedadeId ? Number(propriedadeId) : undefined,
-      talhaoId: selectedTalhao ? Number(selectedTalhao) : undefined,
-      status,
+      propriedadeId: optionalPositiveInt(propriedadeId, 'propriedadeId'),
+      talhaoId: optionalPositiveInt(selectedTalhao, 'talhaoId'),
+      status: optionalStatus(status, ['ativo', 'inativo']),
     });
   }
 
@@ -56,7 +70,14 @@ export class DevicesController {
   @Patch(':id/status')
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateDeviceStatusDto,
+    @Body(
+      new ValidationPipe({
+        expectedType: UpdateDeviceStatusDto,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    )
+    dto: UpdateDeviceStatusDto,
   ) {
     return this.devicesService.updateStatus(id, dto.status);
   }

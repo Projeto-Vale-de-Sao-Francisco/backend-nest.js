@@ -1,4 +1,11 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsInt,
+  Min,
+  Max,
+  IsISO8601,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateDeviceDto {
   /**
@@ -23,14 +30,18 @@ export class CreateDeviceDto {
   /**
    * Identificador do talhão/lote ao qual o dispositivo está vinculado.
    */
-  @IsNumber({}, { message: 'talhaoId deve ser um número' })
+  @IsInt()
+  @Min(1)
+  @Max(2147483647)
   talhaoId: number;
 
   /**
    * Identificador opcional da propriedade para validação de consistência.
    */
   @IsOptional()
-  @IsNumber()
+  @IsInt()
+  @Min(1)
+  @Max(2147483647)
   propriedadeId?: number;
 
   /**
@@ -53,5 +64,6 @@ export class CreateDeviceDto {
    * Data de instalação do dispositivo. Quando não informada, usa a data atual.
    */
   @IsOptional()
-  dataInstalacao?: string | Date;
+  @IsISO8601({ strict: true })
+  dataInstalacao?: string;
 }

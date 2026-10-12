@@ -283,6 +283,7 @@ model Medicao {
   umidade_solo   Float?
   luminosidade   Float?
   precipitacao   Float?
+  pressao        Float?
 
   sensor  Sensor   @relation(fields: [sensor_id], references: [id])
   alertas Alerta[]

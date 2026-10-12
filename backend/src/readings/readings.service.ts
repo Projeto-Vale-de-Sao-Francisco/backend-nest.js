@@ -38,6 +38,7 @@ export class ReadingsService {
           umidade_solo: dto.umidadeSolo ?? null,
           luminosidade: dto.luminosidade ?? null,
           precipitacao: dto.precipitacao ?? null,
+          pressao: dto.pressao ?? null,
         },
         include: {
           sensor: {
@@ -205,6 +206,11 @@ export class ReadingsService {
           `Sensor com ID ${dto.sensorId} não encontrado.`,
         );
       }
+      if (sensor.dispositivo.status !== 'ativo') {
+        throw new BadRequestException(
+          'Dispositivo inativo. Leituras rejeitadas.',
+        );
+      }
     } else if (dto.codigoDispositivo) {
       const dispositivo = await this.prisma.dispositivo.findUnique({
         where: { codigo: dto.codigoDispositivo.trim() },
@@ -229,16 +235,9 @@ export class ReadingsService {
       sensor = dispositivo.sensores.find((s) => s.status === 'ativo') ?? null;
 
       if (!sensor) {
-        // Se ainda não existir sensor criado para o dispositivo, cria um padrão
-        sensor = await this.prisma.sensor.create({
-          data: {
-            dispositivo_id: dispositivo.id,
-            tipo: 'temperatura_umidade',
-            unidade_medida: '°C, %',
-            status: 'ativo',
-          },
-          include: { dispositivo: true },
-        });
+        throw new BadRequestException(
+          'Dispositivo sem sensor ativo. Ative o sensor antes de enviar leituras.',
+        );
       }
     }
 

@@ -1,11 +1,21 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsInt,
+  Min,
+  Max,
+  IsISO8601,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateReadingDto {
   /**
    * ID direto do sensor (opcional se fornecido codigoDispositivo).
    */
   @IsOptional()
-  @IsNumber({}, { message: 'sensorId deve ser um número' })
+  @IsInt()
+  @Min(1)
+  @Max(2147483647)
   sensorId?: number;
 
   /**
@@ -20,18 +30,23 @@ export class CreateReadingDto {
    * Data e hora da coleta da leitura. Padrão: data/hora atual.
    */
   @IsOptional()
-  dataHora?: string | Date;
+  @IsISO8601({ strict: true })
+  dataHora?: string;
 
   /**
    * Temperatura em graus Celsius (°C).
    */
   @IsNumber({}, { message: 'temperatura deve ser um número' })
+  @Min(-50)
+  @Max(65)
   temperatura: number;
 
   /**
    * Umidade relativa do ar em percentual (%).
    */
   @IsNumber({}, { message: 'umidade deve ser um número' })
+  @Min(0)
+  @Max(100)
   umidade: number;
 
   /**
@@ -39,6 +54,8 @@ export class CreateReadingDto {
    */
   @IsOptional()
   @IsNumber({}, { message: 'umidadeSolo deve ser um número' })
+  @Min(0)
+  @Max(100)
   umidadeSolo?: number;
 
   /**
@@ -46,6 +63,7 @@ export class CreateReadingDto {
    */
   @IsOptional()
   @IsNumber({}, { message: 'luminosidade deve ser um número' })
+  @Min(0)
   luminosidade?: number;
 
   /**
@@ -53,6 +71,7 @@ export class CreateReadingDto {
    */
   @IsOptional()
   @IsNumber({}, { message: 'precipitacao deve ser um número' })
+  @Min(0)
   precipitacao?: number;
 
   /**
@@ -60,5 +79,6 @@ export class CreateReadingDto {
    */
   @IsOptional()
   @IsNumber({}, { message: 'pressao deve ser um número' })
+  @Min(0)
   pressao?: number;
 }

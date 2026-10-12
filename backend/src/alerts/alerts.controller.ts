@@ -6,6 +6,11 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
+import {
+  optionalPositiveInt,
+  optionalBoolean,
+  optionalStatus,
+} from '../common/query-validation.js';
 import { AlertsService } from './alerts.service.js';
 
 @Controller('alerts')
@@ -22,10 +27,9 @@ export class AlertsController {
     @Query('talhaoId') talhaoId?: string,
   ) {
     return this.alertsService.findAll({
-      status,
-      visualizado:
-        visualizado !== undefined ? visualizado === 'true' : undefined,
-      talhaoId: talhaoId ? Number(talhaoId) : undefined,
+      status: optionalStatus(status, ['ativo', 'resolvido']),
+      visualizado: optionalBoolean(visualizado, 'visualizado'),
+      talhaoId: optionalPositiveInt(talhaoId, 'talhaoId'),
     });
   }
 
