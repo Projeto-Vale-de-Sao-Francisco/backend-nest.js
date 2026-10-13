@@ -33,7 +33,6 @@ export class LotesService {
     return this.prisma.$transaction(async (tx) => {
       await this.validarReferencias(tx, dto.propriedade_id, dto.cultura_id);
       await this.garantirNomeDisponivel(tx, dto.propriedade_id, dto.nome);
-      await this.validarArea(tx, dto.propriedade_id, dto.area);
 
       const lote = await tx.talhao.create({
         data: {
@@ -111,11 +110,9 @@ export class LotesService {
         );
 
       const propriedadeId = dto.propriedade_id ?? lote.propriedade_id;
-      const area = dto.area ?? lote.area;
       const nome = dto.nome?.trim() ?? lote.nome;
       await this.validarPropriedade(tx, propriedadeId);
       await this.garantirNomeDisponivel(tx, propriedadeId, nome, id);
-      await this.validarArea(tx, propriedadeId, area, id);
       this.validarDatas(
         plantio.data_plantio.toISOString(),
         dto.previsao_colheita,
@@ -128,7 +125,7 @@ export class LotesService {
           ...(dto.propriedade_id !== undefined
             ? { propriedade_id: propriedadeId }
             : {}),
-          ...(dto.area !== undefined ? { area } : {}),
+          ...(dto.area !== undefined ? { area: dto.area } : {}),
           ...(dto.situacao !== undefined ? { status: dto.situacao } : {}),
         },
       });
@@ -196,27 +193,6 @@ export class LotesService {
     if (existente)
       throw new ConflictException(
         'Já existe um lote com este nome na propriedade',
-      );
-  }
-
-  private async validarArea(
-    tx: Tx,
-    propriedadeId: number,
-    area: number,
-    ignorarId?: number,
-  ) {
-    const propriedade = await this.validarPropriedade(tx, propriedadeId);
-    const agregado = await tx.talhao.aggregate({
-      where: {
-        propriedade_id: propriedadeId,
-        ...(ignorarId ? { NOT: { id: ignorarId } } : {}),
-      },
-      _sum: { area: true },
-    });
-    const ocupada = agregado._sum.area ?? 0;
-    if (ocupada + area > propriedade.area_total + Number.EPSILON)
-      throw new BadRequestException(
-        `A soma das áreas dos lotes ultrapassa a área total da propriedade (${propriedade.area_total})`,
       );
   }
 
