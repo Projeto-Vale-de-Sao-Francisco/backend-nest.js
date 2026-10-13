@@ -39,6 +39,7 @@ export class LotesService {
           propriedade_id: dto.propriedade_id,
           nome: dto.nome.trim(),
           area: dto.area,
+          ...(dto.poligono !== undefined ? { poligono: dto.poligono } : {}),
           status: dto.situacao,
         },
       });
@@ -126,6 +127,7 @@ export class LotesService {
             ? { propriedade_id: propriedadeId }
             : {}),
           ...(dto.area !== undefined ? { area: dto.area } : {}),
+          ...(dto.poligono !== undefined ? { poligono: dto.poligono } : {}),
           ...(dto.situacao !== undefined ? { status: dto.situacao } : {}),
         },
       });

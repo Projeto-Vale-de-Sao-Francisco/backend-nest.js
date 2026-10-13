@@ -9,6 +9,7 @@ import {
   IsPositive,
   IsString,
   Min,
+  ValidateBy,
 } from 'class-validator';
 
 const aparar = ({ value }: { value: unknown }) =>
@@ -36,6 +37,32 @@ export class CreateLoteDto {
   @IsNumber({}, { message: 'area deve ser número' })
   @IsPositive({ message: 'area deve ser positiva' })
   area!: number;
+
+  @IsOptional()
+  @ValidateBy({
+    name: 'poligonoTalhao',
+    validator: {
+      validate: (value: unknown) =>
+        Array.isArray(value) &&
+        value.length >= 3 &&
+        value.every(
+          (ponto) =>
+            Array.isArray(ponto) &&
+            ponto.length === 2 &&
+            typeof ponto[0] === 'number' &&
+            Number.isFinite(ponto[0]) &&
+            ponto[0] >= -90 &&
+            ponto[0] <= 90 &&
+            typeof ponto[1] === 'number' &&
+            Number.isFinite(ponto[1]) &&
+            ponto[1] >= -180 &&
+            ponto[1] <= 180,
+        ),
+      defaultMessage: () =>
+        'poligono deve conter ao menos três pares válidos de latitude e longitude',
+    },
+  })
+  poligono?: number[][];
 
   @IsDateString(
     { strict: true },

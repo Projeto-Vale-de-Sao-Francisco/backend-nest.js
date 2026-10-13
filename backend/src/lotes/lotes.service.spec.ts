@@ -63,17 +63,25 @@ describe('LotesService', () => {
   });
 
   it('cadastra lote, plantio e previsão na mesma transação', async () => {
+    const poligono = [
+      [-9.39, -40.5],
+      [-9.39, -40.49],
+      [-9.4, -40.49],
+    ];
     const resultado = await service.create({
       nome: 'Lote MVP',
       propriedade_id: 1,
       cultura_id: 2,
       area: 3,
+      poligono,
       data_plantio: '2026-10-01',
       previsao_colheita: '2027-01-15',
       situacao: 'ativo',
-    });
+    } as Parameters<LotesService['create']>[0]);
     expect(db.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.talhao.create).toHaveBeenCalledTimes(1);
+    expect(tx.talhao.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ poligono }),
+    });
     expect(tx.talhao_Cultura.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ talhao_id: 10, cultura_id: 2 }),
     });
