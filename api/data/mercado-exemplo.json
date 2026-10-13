@@ -1,0 +1,8 @@
+[
+  { "cultura": "Manga", "mercadoDestino": "Europa", "precoMedio": 9.1, "moeda": "BRL", "demandaEstimada": "alta" },
+  { "cultura": "Manga", "mercadoDestino": "Estados Unidos", "precoMedio": 9.8, "moeda": "BRL", "demandaEstimada": "média" },
+  { "cultura": "Uva", "mercadoDestino": "Europa", "precoMedio": 14.6, "moeda": "BRL", "demandaEstimada": "alta" },
+  { "cultura": "Uva", "mercadoDestino": "Mercado interno", "precoMedio": 10.2, "moeda": "BRL", "demandaEstimada": "média" },
+  { "cultura": "Goiaba", "mercadoDestino": "Mercado interno", "precoMedio": 5.4, "moeda": "BRL", "demandaEstimada": "média" },
+  { "cultura": "Melão", "mercadoDestino": "Europa", "precoMedio": 4.9, "moeda": "BRL", "demandaEstimada": "alta" }
+]

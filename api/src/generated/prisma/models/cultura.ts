@@ -518,14 +518,6 @@ export type FloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type culturaCreateNestedOneWithoutTalhaoInput = {
   create?: Prisma.XOR<Prisma.culturaCreateWithoutTalhaoInput, Prisma.culturaUncheckedCreateWithoutTalhaoInput>
   connectOrCreate?: Prisma.culturaCreateOrConnectWithoutTalhaoInput

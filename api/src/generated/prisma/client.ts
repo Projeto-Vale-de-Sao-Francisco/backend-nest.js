@@ -47,6 +47,21 @@ export { Prisma }
  */
 export type usuario = Prisma.usuarioModel
 /**
+ * Model auditLog
+ * 
+ */
+export type auditLog = Prisma.auditLogModel
+/**
+ * Model empresa
+ * 
+ */
+export type empresa = Prisma.empresaModel
+/**
+ * Model usuarioEmpresa
+ * 
+ */
+export type usuarioEmpresa = Prisma.usuarioEmpresaModel
+/**
  * Model propriedade
  * 
  */

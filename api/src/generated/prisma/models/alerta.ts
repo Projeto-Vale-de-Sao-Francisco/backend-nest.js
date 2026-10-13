@@ -30,12 +30,14 @@ export type AlertaAvgAggregateOutputType = {
   id: number | null
   talhaoId: number | null
   medicaoId: number | null
+  dispositivoId: number | null
 }
 
 export type AlertaSumAggregateOutputType = {
   id: number | null
   talhaoId: number | null
   medicaoId: number | null
+  dispositivoId: number | null
 }
 
 export type AlertaMinAggregateOutputType = {
@@ -48,6 +50,9 @@ export type AlertaMinAggregateOutputType = {
   descricao: string | null
   dataHora: Date | null
   visualizado: boolean | null
+  resolvido: boolean | null
+  resolvidoEm: Date | null
+  dispositivoId: number | null
 }
 
 export type AlertaMaxAggregateOutputType = {
@@ -60,6 +65,9 @@ export type AlertaMaxAggregateOutputType = {
   descricao: string | null
   dataHora: Date | null
   visualizado: boolean | null
+  resolvido: boolean | null
+  resolvidoEm: Date | null
+  dispositivoId: number | null
 }
 
 export type AlertaCountAggregateOutputType = {
@@ -72,6 +80,9 @@ export type AlertaCountAggregateOutputType = {
   descricao: number
   dataHora: number
   visualizado: number
+  resolvido: number
+  resolvidoEm: number
+  dispositivoId: number
   _all: number
 }
 
@@ -80,12 +91,14 @@ export type AlertaAvgAggregateInputType = {
   id?: true
   talhaoId?: true
   medicaoId?: true
+  dispositivoId?: true
 }
 
 export type AlertaSumAggregateInputType = {
   id?: true
   talhaoId?: true
   medicaoId?: true
+  dispositivoId?: true
 }
 
 export type AlertaMinAggregateInputType = {
@@ -98,6 +111,9 @@ export type AlertaMinAggregateInputType = {
   descricao?: true
   dataHora?: true
   visualizado?: true
+  resolvido?: true
+  resolvidoEm?: true
+  dispositivoId?: true
 }
 
 export type AlertaMaxAggregateInputType = {
@@ -110,6 +126,9 @@ export type AlertaMaxAggregateInputType = {
   descricao?: true
   dataHora?: true
   visualizado?: true
+  resolvido?: true
+  resolvidoEm?: true
+  dispositivoId?: true
 }
 
 export type AlertaCountAggregateInputType = {
@@ -122,6 +141,9 @@ export type AlertaCountAggregateInputType = {
   descricao?: true
   dataHora?: true
   visualizado?: true
+  resolvido?: true
+  resolvidoEm?: true
+  dispositivoId?: true
   _all?: true
 }
 
@@ -221,6 +243,9 @@ export type AlertaGroupByOutputType = {
   descricao: string
   dataHora: Date
   visualizado: boolean
+  resolvido: boolean
+  resolvidoEm: Date | null
+  dispositivoId: number | null
   _count: AlertaCountAggregateOutputType | null
   _avg: AlertaAvgAggregateOutputType | null
   _sum: AlertaSumAggregateOutputType | null
@@ -256,8 +281,12 @@ export type alertaWhereInput = {
   descricao?: Prisma.StringFilter<"alerta"> | string
   dataHora?: Prisma.DateTimeFilter<"alerta"> | Date | string
   visualizado?: Prisma.BoolFilter<"alerta"> | boolean
+  resolvido?: Prisma.BoolFilter<"alerta"> | boolean
+  resolvidoEm?: Prisma.DateTimeNullableFilter<"alerta"> | Date | string | null
+  dispositivoId?: Prisma.IntNullableFilter<"alerta"> | number | null
   talhao?: Prisma.XOR<Prisma.TalhaoScalarRelationFilter, Prisma.talhaoWhereInput>
   medicao?: Prisma.XOR<Prisma.MedicaoNullableScalarRelationFilter, Prisma.medicaoWhereInput> | null
+  dispositivo?: Prisma.XOR<Prisma.DispositivoNullableScalarRelationFilter, Prisma.dispositivoWhereInput> | null
 }
 
 export type alertaOrderByWithRelationInput = {
@@ -270,8 +299,12 @@ export type alertaOrderByWithRelationInput = {
   descricao?: Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   visualizado?: Prisma.SortOrder
+  resolvido?: Prisma.SortOrder
+  resolvidoEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispositivoId?: Prisma.SortOrderInput | Prisma.SortOrder
   talhao?: Prisma.talhaoOrderByWithRelationInput
   medicao?: Prisma.medicaoOrderByWithRelationInput
+  dispositivo?: Prisma.dispositivoOrderByWithRelationInput
 }
 
 export type alertaWhereUniqueInput = Prisma.AtLeast<{
@@ -287,8 +320,12 @@ export type alertaWhereUniqueInput = Prisma.AtLeast<{
   descricao?: Prisma.StringFilter<"alerta"> | string
   dataHora?: Prisma.DateTimeFilter<"alerta"> | Date | string
   visualizado?: Prisma.BoolFilter<"alerta"> | boolean
+  resolvido?: Prisma.BoolFilter<"alerta"> | boolean
+  resolvidoEm?: Prisma.DateTimeNullableFilter<"alerta"> | Date | string | null
+  dispositivoId?: Prisma.IntNullableFilter<"alerta"> | number | null
   talhao?: Prisma.XOR<Prisma.TalhaoScalarRelationFilter, Prisma.talhaoWhereInput>
   medicao?: Prisma.XOR<Prisma.MedicaoNullableScalarRelationFilter, Prisma.medicaoWhereInput> | null
+  dispositivo?: Prisma.XOR<Prisma.DispositivoNullableScalarRelationFilter, Prisma.dispositivoWhereInput> | null
 }, "id">
 
 export type alertaOrderByWithAggregationInput = {
@@ -301,6 +338,9 @@ export type alertaOrderByWithAggregationInput = {
   descricao?: Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   visualizado?: Prisma.SortOrder
+  resolvido?: Prisma.SortOrder
+  resolvidoEm?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispositivoId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.alertaCountOrderByAggregateInput
   _avg?: Prisma.alertaAvgOrderByAggregateInput
   _max?: Prisma.alertaMaxOrderByAggregateInput
@@ -321,6 +361,9 @@ export type alertaScalarWhereWithAggregatesInput = {
   descricao?: Prisma.StringWithAggregatesFilter<"alerta"> | string
   dataHora?: Prisma.DateTimeWithAggregatesFilter<"alerta"> | Date | string
   visualizado?: Prisma.BoolWithAggregatesFilter<"alerta"> | boolean
+  resolvido?: Prisma.BoolWithAggregatesFilter<"alerta"> | boolean
+  resolvidoEm?: Prisma.DateTimeNullableWithAggregatesFilter<"alerta"> | Date | string | null
+  dispositivoId?: Prisma.IntNullableWithAggregatesFilter<"alerta"> | number | null
 }
 
 export type alertaCreateInput = {
@@ -330,8 +373,11 @@ export type alertaCreateInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
   talhao: Prisma.talhaoCreateNestedOneWithoutAlertaInput
   medicao?: Prisma.medicaoCreateNestedOneWithoutAlertaInput
+  dispositivo?: Prisma.dispositivoCreateNestedOneWithoutAlertaInput
 }
 
 export type alertaUncheckedCreateInput = {
@@ -344,6 +390,9 @@ export type alertaUncheckedCreateInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+  dispositivoId?: number | null
 }
 
 export type alertaUpdateInput = {
@@ -353,8 +402,11 @@ export type alertaUpdateInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   talhao?: Prisma.talhaoUpdateOneRequiredWithoutAlertaNestedInput
   medicao?: Prisma.medicaoUpdateOneWithoutAlertaNestedInput
+  dispositivo?: Prisma.dispositivoUpdateOneWithoutAlertaNestedInput
 }
 
 export type alertaUncheckedUpdateInput = {
@@ -367,6 +419,9 @@ export type alertaUncheckedUpdateInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispositivoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type alertaCreateManyInput = {
@@ -379,6 +434,9 @@ export type alertaCreateManyInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+  dispositivoId?: number | null
 }
 
 export type alertaUpdateManyMutationInput = {
@@ -388,6 +446,8 @@ export type alertaUpdateManyMutationInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type alertaUncheckedUpdateManyInput = {
@@ -400,6 +460,9 @@ export type alertaUncheckedUpdateManyInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispositivoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type AlertaListRelationFilter = {
@@ -422,12 +485,16 @@ export type alertaCountOrderByAggregateInput = {
   descricao?: Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   visualizado?: Prisma.SortOrder
+  resolvido?: Prisma.SortOrder
+  resolvidoEm?: Prisma.SortOrder
+  dispositivoId?: Prisma.SortOrder
 }
 
 export type alertaAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   talhaoId?: Prisma.SortOrder
   medicaoId?: Prisma.SortOrder
+  dispositivoId?: Prisma.SortOrder
 }
 
 export type alertaMaxOrderByAggregateInput = {
@@ -440,6 +507,9 @@ export type alertaMaxOrderByAggregateInput = {
   descricao?: Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   visualizado?: Prisma.SortOrder
+  resolvido?: Prisma.SortOrder
+  resolvidoEm?: Prisma.SortOrder
+  dispositivoId?: Prisma.SortOrder
 }
 
 export type alertaMinOrderByAggregateInput = {
@@ -452,12 +522,16 @@ export type alertaMinOrderByAggregateInput = {
   descricao?: Prisma.SortOrder
   dataHora?: Prisma.SortOrder
   visualizado?: Prisma.SortOrder
+  resolvido?: Prisma.SortOrder
+  resolvidoEm?: Prisma.SortOrder
+  dispositivoId?: Prisma.SortOrder
 }
 
 export type alertaSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   talhaoId?: Prisma.SortOrder
   medicaoId?: Prisma.SortOrder
+  dispositivoId?: Prisma.SortOrder
 }
 
 export type alertaCreateNestedManyWithoutTalhaoInput = {
@@ -499,6 +573,48 @@ export type alertaUncheckedUpdateManyWithoutTalhaoNestedInput = {
   connect?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
   update?: Prisma.alertaUpdateWithWhereUniqueWithoutTalhaoInput | Prisma.alertaUpdateWithWhereUniqueWithoutTalhaoInput[]
   updateMany?: Prisma.alertaUpdateManyWithWhereWithoutTalhaoInput | Prisma.alertaUpdateManyWithWhereWithoutTalhaoInput[]
+  deleteMany?: Prisma.alertaScalarWhereInput | Prisma.alertaScalarWhereInput[]
+}
+
+export type alertaCreateNestedManyWithoutDispositivoInput = {
+  create?: Prisma.XOR<Prisma.alertaCreateWithoutDispositivoInput, Prisma.alertaUncheckedCreateWithoutDispositivoInput> | Prisma.alertaCreateWithoutDispositivoInput[] | Prisma.alertaUncheckedCreateWithoutDispositivoInput[]
+  connectOrCreate?: Prisma.alertaCreateOrConnectWithoutDispositivoInput | Prisma.alertaCreateOrConnectWithoutDispositivoInput[]
+  createMany?: Prisma.alertaCreateManyDispositivoInputEnvelope
+  connect?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+}
+
+export type alertaUncheckedCreateNestedManyWithoutDispositivoInput = {
+  create?: Prisma.XOR<Prisma.alertaCreateWithoutDispositivoInput, Prisma.alertaUncheckedCreateWithoutDispositivoInput> | Prisma.alertaCreateWithoutDispositivoInput[] | Prisma.alertaUncheckedCreateWithoutDispositivoInput[]
+  connectOrCreate?: Prisma.alertaCreateOrConnectWithoutDispositivoInput | Prisma.alertaCreateOrConnectWithoutDispositivoInput[]
+  createMany?: Prisma.alertaCreateManyDispositivoInputEnvelope
+  connect?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+}
+
+export type alertaUpdateManyWithoutDispositivoNestedInput = {
+  create?: Prisma.XOR<Prisma.alertaCreateWithoutDispositivoInput, Prisma.alertaUncheckedCreateWithoutDispositivoInput> | Prisma.alertaCreateWithoutDispositivoInput[] | Prisma.alertaUncheckedCreateWithoutDispositivoInput[]
+  connectOrCreate?: Prisma.alertaCreateOrConnectWithoutDispositivoInput | Prisma.alertaCreateOrConnectWithoutDispositivoInput[]
+  upsert?: Prisma.alertaUpsertWithWhereUniqueWithoutDispositivoInput | Prisma.alertaUpsertWithWhereUniqueWithoutDispositivoInput[]
+  createMany?: Prisma.alertaCreateManyDispositivoInputEnvelope
+  set?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+  disconnect?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+  delete?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+  connect?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+  update?: Prisma.alertaUpdateWithWhereUniqueWithoutDispositivoInput | Prisma.alertaUpdateWithWhereUniqueWithoutDispositivoInput[]
+  updateMany?: Prisma.alertaUpdateManyWithWhereWithoutDispositivoInput | Prisma.alertaUpdateManyWithWhereWithoutDispositivoInput[]
+  deleteMany?: Prisma.alertaScalarWhereInput | Prisma.alertaScalarWhereInput[]
+}
+
+export type alertaUncheckedUpdateManyWithoutDispositivoNestedInput = {
+  create?: Prisma.XOR<Prisma.alertaCreateWithoutDispositivoInput, Prisma.alertaUncheckedCreateWithoutDispositivoInput> | Prisma.alertaCreateWithoutDispositivoInput[] | Prisma.alertaUncheckedCreateWithoutDispositivoInput[]
+  connectOrCreate?: Prisma.alertaCreateOrConnectWithoutDispositivoInput | Prisma.alertaCreateOrConnectWithoutDispositivoInput[]
+  upsert?: Prisma.alertaUpsertWithWhereUniqueWithoutDispositivoInput | Prisma.alertaUpsertWithWhereUniqueWithoutDispositivoInput[]
+  createMany?: Prisma.alertaCreateManyDispositivoInputEnvelope
+  set?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+  disconnect?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+  delete?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+  connect?: Prisma.alertaWhereUniqueInput | Prisma.alertaWhereUniqueInput[]
+  update?: Prisma.alertaUpdateWithWhereUniqueWithoutDispositivoInput | Prisma.alertaUpdateWithWhereUniqueWithoutDispositivoInput[]
+  updateMany?: Prisma.alertaUpdateManyWithWhereWithoutDispositivoInput | Prisma.alertaUpdateManyWithWhereWithoutDispositivoInput[]
   deleteMany?: Prisma.alertaScalarWhereInput | Prisma.alertaScalarWhereInput[]
 }
 
@@ -559,7 +675,10 @@ export type alertaCreateWithoutTalhaoInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
   medicao?: Prisma.medicaoCreateNestedOneWithoutAlertaInput
+  dispositivo?: Prisma.dispositivoCreateNestedOneWithoutAlertaInput
 }
 
 export type alertaUncheckedCreateWithoutTalhaoInput = {
@@ -571,6 +690,9 @@ export type alertaUncheckedCreateWithoutTalhaoInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+  dispositivoId?: number | null
 }
 
 export type alertaCreateOrConnectWithoutTalhaoInput = {
@@ -612,6 +734,62 @@ export type alertaScalarWhereInput = {
   descricao?: Prisma.StringFilter<"alerta"> | string
   dataHora?: Prisma.DateTimeFilter<"alerta"> | Date | string
   visualizado?: Prisma.BoolFilter<"alerta"> | boolean
+  resolvido?: Prisma.BoolFilter<"alerta"> | boolean
+  resolvidoEm?: Prisma.DateTimeNullableFilter<"alerta"> | Date | string | null
+  dispositivoId?: Prisma.IntNullableFilter<"alerta"> | number | null
+}
+
+export type alertaCreateWithoutDispositivoInput = {
+  tipo?: string
+  nivel?: $Enums.NivelAlerta
+  titulo: string
+  descricao: string
+  dataHora?: Date | string
+  visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+  talhao: Prisma.talhaoCreateNestedOneWithoutAlertaInput
+  medicao?: Prisma.medicaoCreateNestedOneWithoutAlertaInput
+}
+
+export type alertaUncheckedCreateWithoutDispositivoInput = {
+  id?: number
+  talhaoId: number
+  medicaoId?: number | null
+  tipo?: string
+  nivel?: $Enums.NivelAlerta
+  titulo: string
+  descricao: string
+  dataHora?: Date | string
+  visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+}
+
+export type alertaCreateOrConnectWithoutDispositivoInput = {
+  where: Prisma.alertaWhereUniqueInput
+  create: Prisma.XOR<Prisma.alertaCreateWithoutDispositivoInput, Prisma.alertaUncheckedCreateWithoutDispositivoInput>
+}
+
+export type alertaCreateManyDispositivoInputEnvelope = {
+  data: Prisma.alertaCreateManyDispositivoInput | Prisma.alertaCreateManyDispositivoInput[]
+  skipDuplicates?: boolean
+}
+
+export type alertaUpsertWithWhereUniqueWithoutDispositivoInput = {
+  where: Prisma.alertaWhereUniqueInput
+  update: Prisma.XOR<Prisma.alertaUpdateWithoutDispositivoInput, Prisma.alertaUncheckedUpdateWithoutDispositivoInput>
+  create: Prisma.XOR<Prisma.alertaCreateWithoutDispositivoInput, Prisma.alertaUncheckedCreateWithoutDispositivoInput>
+}
+
+export type alertaUpdateWithWhereUniqueWithoutDispositivoInput = {
+  where: Prisma.alertaWhereUniqueInput
+  data: Prisma.XOR<Prisma.alertaUpdateWithoutDispositivoInput, Prisma.alertaUncheckedUpdateWithoutDispositivoInput>
+}
+
+export type alertaUpdateManyWithWhereWithoutDispositivoInput = {
+  where: Prisma.alertaScalarWhereInput
+  data: Prisma.XOR<Prisma.alertaUpdateManyMutationInput, Prisma.alertaUncheckedUpdateManyWithoutDispositivoInput>
 }
 
 export type alertaCreateWithoutMedicaoInput = {
@@ -621,7 +799,10 @@ export type alertaCreateWithoutMedicaoInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
   talhao: Prisma.talhaoCreateNestedOneWithoutAlertaInput
+  dispositivo?: Prisma.dispositivoCreateNestedOneWithoutAlertaInput
 }
 
 export type alertaUncheckedCreateWithoutMedicaoInput = {
@@ -633,6 +814,9 @@ export type alertaUncheckedCreateWithoutMedicaoInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+  dispositivoId?: number | null
 }
 
 export type alertaCreateOrConnectWithoutMedicaoInput = {
@@ -670,6 +854,9 @@ export type alertaCreateManyTalhaoInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+  dispositivoId?: number | null
 }
 
 export type alertaUpdateWithoutTalhaoInput = {
@@ -679,7 +866,10 @@ export type alertaUpdateWithoutTalhaoInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   medicao?: Prisma.medicaoUpdateOneWithoutAlertaNestedInput
+  dispositivo?: Prisma.dispositivoUpdateOneWithoutAlertaNestedInput
 }
 
 export type alertaUncheckedUpdateWithoutTalhaoInput = {
@@ -691,6 +881,9 @@ export type alertaUncheckedUpdateWithoutTalhaoInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispositivoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type alertaUncheckedUpdateManyWithoutTalhaoInput = {
@@ -702,6 +895,64 @@ export type alertaUncheckedUpdateManyWithoutTalhaoInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispositivoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+}
+
+export type alertaCreateManyDispositivoInput = {
+  id?: number
+  talhaoId: number
+  medicaoId?: number | null
+  tipo?: string
+  nivel?: $Enums.NivelAlerta
+  titulo: string
+  descricao: string
+  dataHora?: Date | string
+  visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+}
+
+export type alertaUpdateWithoutDispositivoInput = {
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  nivel?: Prisma.EnumNivelAlertaFieldUpdateOperationsInput | $Enums.NivelAlerta
+  titulo?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.StringFieldUpdateOperationsInput | string
+  dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  talhao?: Prisma.talhaoUpdateOneRequiredWithoutAlertaNestedInput
+  medicao?: Prisma.medicaoUpdateOneWithoutAlertaNestedInput
+}
+
+export type alertaUncheckedUpdateWithoutDispositivoInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  talhaoId?: Prisma.IntFieldUpdateOperationsInput | number
+  medicaoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  nivel?: Prisma.EnumNivelAlertaFieldUpdateOperationsInput | $Enums.NivelAlerta
+  titulo?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.StringFieldUpdateOperationsInput | string
+  dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type alertaUncheckedUpdateManyWithoutDispositivoInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  talhaoId?: Prisma.IntFieldUpdateOperationsInput | number
+  medicaoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  nivel?: Prisma.EnumNivelAlertaFieldUpdateOperationsInput | $Enums.NivelAlerta
+  titulo?: Prisma.StringFieldUpdateOperationsInput | string
+  descricao?: Prisma.StringFieldUpdateOperationsInput | string
+  dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type alertaCreateManyMedicaoInput = {
@@ -713,6 +964,9 @@ export type alertaCreateManyMedicaoInput = {
   descricao: string
   dataHora?: Date | string
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: Date | string | null
+  dispositivoId?: number | null
 }
 
 export type alertaUpdateWithoutMedicaoInput = {
@@ -722,7 +976,10 @@ export type alertaUpdateWithoutMedicaoInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   talhao?: Prisma.talhaoUpdateOneRequiredWithoutAlertaNestedInput
+  dispositivo?: Prisma.dispositivoUpdateOneWithoutAlertaNestedInput
 }
 
 export type alertaUncheckedUpdateWithoutMedicaoInput = {
@@ -734,6 +991,9 @@ export type alertaUncheckedUpdateWithoutMedicaoInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispositivoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 export type alertaUncheckedUpdateManyWithoutMedicaoInput = {
@@ -745,6 +1005,9 @@ export type alertaUncheckedUpdateManyWithoutMedicaoInput = {
   descricao?: Prisma.StringFieldUpdateOperationsInput | string
   dataHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   visualizado?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvido?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resolvidoEm?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispositivoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
 }
 
 
@@ -759,8 +1022,12 @@ export type alertaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   descricao?: boolean
   dataHora?: boolean
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: boolean
+  dispositivoId?: boolean
   talhao?: boolean | Prisma.talhaoDefaultArgs<ExtArgs>
   medicao?: boolean | Prisma.alerta$medicaoArgs<ExtArgs>
+  dispositivo?: boolean | Prisma.alerta$dispositivoArgs<ExtArgs>
 }, ExtArgs["result"]["alerta"]>
 
 export type alertaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -773,8 +1040,12 @@ export type alertaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   descricao?: boolean
   dataHora?: boolean
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: boolean
+  dispositivoId?: boolean
   talhao?: boolean | Prisma.talhaoDefaultArgs<ExtArgs>
   medicao?: boolean | Prisma.alerta$medicaoArgs<ExtArgs>
+  dispositivo?: boolean | Prisma.alerta$dispositivoArgs<ExtArgs>
 }, ExtArgs["result"]["alerta"]>
 
 export type alertaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -787,8 +1058,12 @@ export type alertaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   descricao?: boolean
   dataHora?: boolean
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: boolean
+  dispositivoId?: boolean
   talhao?: boolean | Prisma.talhaoDefaultArgs<ExtArgs>
   medicao?: boolean | Prisma.alerta$medicaoArgs<ExtArgs>
+  dispositivo?: boolean | Prisma.alerta$dispositivoArgs<ExtArgs>
 }, ExtArgs["result"]["alerta"]>
 
 export type alertaSelectScalar = {
@@ -801,20 +1076,26 @@ export type alertaSelectScalar = {
   descricao?: boolean
   dataHora?: boolean
   visualizado?: boolean
+  resolvido?: boolean
+  resolvidoEm?: boolean
+  dispositivoId?: boolean
 }
 
-export type alertaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "talhaoId" | "medicaoId" | "tipo" | "nivel" | "titulo" | "descricao" | "dataHora" | "visualizado", ExtArgs["result"]["alerta"]>
+export type alertaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "talhaoId" | "medicaoId" | "tipo" | "nivel" | "titulo" | "descricao" | "dataHora" | "visualizado" | "resolvido" | "resolvidoEm" | "dispositivoId", ExtArgs["result"]["alerta"]>
 export type alertaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   talhao?: boolean | Prisma.talhaoDefaultArgs<ExtArgs>
   medicao?: boolean | Prisma.alerta$medicaoArgs<ExtArgs>
+  dispositivo?: boolean | Prisma.alerta$dispositivoArgs<ExtArgs>
 }
 export type alertaIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   talhao?: boolean | Prisma.talhaoDefaultArgs<ExtArgs>
   medicao?: boolean | Prisma.alerta$medicaoArgs<ExtArgs>
+  dispositivo?: boolean | Prisma.alerta$dispositivoArgs<ExtArgs>
 }
 export type alertaIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   talhao?: boolean | Prisma.talhaoDefaultArgs<ExtArgs>
   medicao?: boolean | Prisma.alerta$medicaoArgs<ExtArgs>
+  dispositivo?: boolean | Prisma.alerta$dispositivoArgs<ExtArgs>
 }
 
 export type $alertaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -822,6 +1103,7 @@ export type $alertaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   objects: {
     talhao: Prisma.$talhaoPayload<ExtArgs>
     medicao: Prisma.$medicaoPayload<ExtArgs> | null
+    dispositivo: Prisma.$dispositivoPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -833,6 +1115,9 @@ export type $alertaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     descricao: string
     dataHora: Date
     visualizado: boolean
+    resolvido: boolean
+    resolvidoEm: Date | null
+    dispositivoId: number | null
   }, ExtArgs["result"]["alerta"]>
   composites: {}
 }
@@ -1229,6 +1514,7 @@ export interface Prisma__alertaClient<T, Null = never, ExtArgs extends runtime.T
   readonly [Symbol.toStringTag]: "PrismaPromise"
   talhao<T extends Prisma.talhaoDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.talhaoDefaultArgs<ExtArgs>>): Prisma.Prisma__talhaoClient<runtime.Types.Result.GetResult<Prisma.$talhaoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   medicao<T extends Prisma.alerta$medicaoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.alerta$medicaoArgs<ExtArgs>>): Prisma.Prisma__medicaoClient<runtime.Types.Result.GetResult<Prisma.$medicaoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  dispositivo<T extends Prisma.alerta$dispositivoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.alerta$dispositivoArgs<ExtArgs>>): Prisma.Prisma__dispositivoClient<runtime.Types.Result.GetResult<Prisma.$dispositivoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1267,6 +1553,9 @@ export interface alertaFieldRefs {
   readonly descricao: Prisma.FieldRef<"alerta", 'String'>
   readonly dataHora: Prisma.FieldRef<"alerta", 'DateTime'>
   readonly visualizado: Prisma.FieldRef<"alerta", 'Boolean'>
+  readonly resolvido: Prisma.FieldRef<"alerta", 'Boolean'>
+  readonly resolvidoEm: Prisma.FieldRef<"alerta", 'DateTime'>
+  readonly dispositivoId: Prisma.FieldRef<"alerta", 'Int'>
 }
     
 
@@ -1684,6 +1973,25 @@ export type alerta$medicaoArgs<ExtArgs extends runtime.Types.Extensions.Internal
    */
   include?: Prisma.medicaoInclude<ExtArgs> | null
   where?: Prisma.medicaoWhereInput
+}
+
+/**
+ * alerta.dispositivo
+ */
+export type alerta$dispositivoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the dispositivo
+   */
+  select?: Prisma.dispositivoSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the dispositivo
+   */
+  omit?: Prisma.dispositivoOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.dispositivoInclude<ExtArgs> | null
+  where?: Prisma.dispositivoWhereInput
 }
 
 /**

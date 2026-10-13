@@ -31,6 +31,7 @@ export type PropriedadeAvgAggregateOutputType = {
   latitude: number | null
   longitude: number | null
   areaTotal: number | null
+  empresaId: number | null
 }
 
 export type PropriedadeSumAggregateOutputType = {
@@ -38,6 +39,7 @@ export type PropriedadeSumAggregateOutputType = {
   latitude: number | null
   longitude: number | null
   areaTotal: number | null
+  empresaId: number | null
 }
 
 export type PropriedadeMinAggregateOutputType = {
@@ -49,6 +51,7 @@ export type PropriedadeMinAggregateOutputType = {
   latitude: number | null
   longitude: number | null
   areaTotal: number | null
+  empresaId: number | null
   status: string | null
   dataCadastro: Date | null
 }
@@ -62,6 +65,7 @@ export type PropriedadeMaxAggregateOutputType = {
   latitude: number | null
   longitude: number | null
   areaTotal: number | null
+  empresaId: number | null
   status: string | null
   dataCadastro: Date | null
 }
@@ -75,6 +79,7 @@ export type PropriedadeCountAggregateOutputType = {
   latitude: number
   longitude: number
   areaTotal: number
+  empresaId: number
   status: number
   dataCadastro: number
   _all: number
@@ -86,6 +91,7 @@ export type PropriedadeAvgAggregateInputType = {
   latitude?: true
   longitude?: true
   areaTotal?: true
+  empresaId?: true
 }
 
 export type PropriedadeSumAggregateInputType = {
@@ -93,6 +99,7 @@ export type PropriedadeSumAggregateInputType = {
   latitude?: true
   longitude?: true
   areaTotal?: true
+  empresaId?: true
 }
 
 export type PropriedadeMinAggregateInputType = {
@@ -104,6 +111,7 @@ export type PropriedadeMinAggregateInputType = {
   latitude?: true
   longitude?: true
   areaTotal?: true
+  empresaId?: true
   status?: true
   dataCadastro?: true
 }
@@ -117,6 +125,7 @@ export type PropriedadeMaxAggregateInputType = {
   latitude?: true
   longitude?: true
   areaTotal?: true
+  empresaId?: true
   status?: true
   dataCadastro?: true
 }
@@ -130,6 +139,7 @@ export type PropriedadeCountAggregateInputType = {
   latitude?: true
   longitude?: true
   areaTotal?: true
+  empresaId?: true
   status?: true
   dataCadastro?: true
   _all?: true
@@ -230,6 +240,7 @@ export type PropriedadeGroupByOutputType = {
   latitude: number | null
   longitude: number | null
   areaTotal: number | null
+  empresaId: number | null
   status: string
   dataCadastro: Date
   _count: PropriedadeCountAggregateOutputType | null
@@ -266,8 +277,10 @@ export type propriedadeWhereInput = {
   latitude?: Prisma.FloatNullableFilter<"propriedade"> | number | null
   longitude?: Prisma.FloatNullableFilter<"propriedade"> | number | null
   areaTotal?: Prisma.FloatNullableFilter<"propriedade"> | number | null
+  empresaId?: Prisma.IntNullableFilter<"propriedade"> | number | null
   status?: Prisma.StringFilter<"propriedade"> | string
   dataCadastro?: Prisma.DateTimeFilter<"propriedade"> | Date | string
+  empresa?: Prisma.XOR<Prisma.EmpresaNullableScalarRelationFilter, Prisma.empresaWhereInput> | null
   talhao?: Prisma.TalhaoListRelationFilter
   usuarioPropriedade?: Prisma.UsuarioPropriedadeListRelationFilter
   operacaoLogistica?: Prisma.OperacaoLogisticaListRelationFilter
@@ -282,8 +295,10 @@ export type propriedadeOrderByWithRelationInput = {
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
   areaTotal?: Prisma.SortOrderInput | Prisma.SortOrder
+  empresaId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   dataCadastro?: Prisma.SortOrder
+  empresa?: Prisma.empresaOrderByWithRelationInput
   talhao?: Prisma.talhaoOrderByRelationAggregateInput
   usuarioPropriedade?: Prisma.usuarioPropriedadeOrderByRelationAggregateInput
   operacaoLogistica?: Prisma.operacaoLogisticaOrderByRelationAggregateInput
@@ -301,8 +316,10 @@ export type propriedadeWhereUniqueInput = Prisma.AtLeast<{
   latitude?: Prisma.FloatNullableFilter<"propriedade"> | number | null
   longitude?: Prisma.FloatNullableFilter<"propriedade"> | number | null
   areaTotal?: Prisma.FloatNullableFilter<"propriedade"> | number | null
+  empresaId?: Prisma.IntNullableFilter<"propriedade"> | number | null
   status?: Prisma.StringFilter<"propriedade"> | string
   dataCadastro?: Prisma.DateTimeFilter<"propriedade"> | Date | string
+  empresa?: Prisma.XOR<Prisma.EmpresaNullableScalarRelationFilter, Prisma.empresaWhereInput> | null
   talhao?: Prisma.TalhaoListRelationFilter
   usuarioPropriedade?: Prisma.UsuarioPropriedadeListRelationFilter
   operacaoLogistica?: Prisma.OperacaoLogisticaListRelationFilter
@@ -317,6 +334,7 @@ export type propriedadeOrderByWithAggregationInput = {
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
   areaTotal?: Prisma.SortOrderInput | Prisma.SortOrder
+  empresaId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   dataCadastro?: Prisma.SortOrder
   _count?: Prisma.propriedadeCountOrderByAggregateInput
@@ -338,6 +356,7 @@ export type propriedadeScalarWhereWithAggregatesInput = {
   latitude?: Prisma.FloatNullableWithAggregatesFilter<"propriedade"> | number | null
   longitude?: Prisma.FloatNullableWithAggregatesFilter<"propriedade"> | number | null
   areaTotal?: Prisma.FloatNullableWithAggregatesFilter<"propriedade"> | number | null
+  empresaId?: Prisma.IntNullableWithAggregatesFilter<"propriedade"> | number | null
   status?: Prisma.StringWithAggregatesFilter<"propriedade"> | string
   dataCadastro?: Prisma.DateTimeWithAggregatesFilter<"propriedade"> | Date | string
 }
@@ -352,6 +371,7 @@ export type propriedadeCreateInput = {
   areaTotal?: number | null
   status?: string
   dataCadastro?: Date | string
+  empresa?: Prisma.empresaCreateNestedOneWithoutPropriedadeInput
   talhao?: Prisma.talhaoCreateNestedManyWithoutPropriedadeInput
   usuarioPropriedade?: Prisma.usuarioPropriedadeCreateNestedManyWithoutPropriedadeInput
   operacaoLogistica?: Prisma.operacaoLogisticaCreateNestedManyWithoutPropriedadeInput
@@ -366,6 +386,7 @@ export type propriedadeUncheckedCreateInput = {
   latitude?: number | null
   longitude?: number | null
   areaTotal?: number | null
+  empresaId?: number | null
   status?: string
   dataCadastro?: Date | string
   talhao?: Prisma.talhaoUncheckedCreateNestedManyWithoutPropriedadeInput
@@ -383,6 +404,7 @@ export type propriedadeUpdateInput = {
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  empresa?: Prisma.empresaUpdateOneWithoutPropriedadeNestedInput
   talhao?: Prisma.talhaoUpdateManyWithoutPropriedadeNestedInput
   usuarioPropriedade?: Prisma.usuarioPropriedadeUpdateManyWithoutPropriedadeNestedInput
   operacaoLogistica?: Prisma.operacaoLogisticaUpdateManyWithoutPropriedadeNestedInput
@@ -397,6 +419,7 @@ export type propriedadeUncheckedUpdateInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  empresaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   talhao?: Prisma.talhaoUncheckedUpdateManyWithoutPropriedadeNestedInput
@@ -413,6 +436,7 @@ export type propriedadeCreateManyInput = {
   latitude?: number | null
   longitude?: number | null
   areaTotal?: number | null
+  empresaId?: number | null
   status?: string
   dataCadastro?: Date | string
 }
@@ -438,8 +462,19 @@ export type propriedadeUncheckedUpdateManyInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  empresaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type PropriedadeListRelationFilter = {
+  every?: Prisma.propriedadeWhereInput
+  some?: Prisma.propriedadeWhereInput
+  none?: Prisma.propriedadeWhereInput
+}
+
+export type propriedadeOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type propriedadeCountOrderByAggregateInput = {
@@ -451,6 +486,7 @@ export type propriedadeCountOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   areaTotal?: Prisma.SortOrder
+  empresaId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   dataCadastro?: Prisma.SortOrder
 }
@@ -460,6 +496,7 @@ export type propriedadeAvgOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   areaTotal?: Prisma.SortOrder
+  empresaId?: Prisma.SortOrder
 }
 
 export type propriedadeMaxOrderByAggregateInput = {
@@ -471,6 +508,7 @@ export type propriedadeMaxOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   areaTotal?: Prisma.SortOrder
+  empresaId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   dataCadastro?: Prisma.SortOrder
 }
@@ -484,6 +522,7 @@ export type propriedadeMinOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   areaTotal?: Prisma.SortOrder
+  empresaId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   dataCadastro?: Prisma.SortOrder
 }
@@ -493,11 +532,54 @@ export type propriedadeSumOrderByAggregateInput = {
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
   areaTotal?: Prisma.SortOrder
+  empresaId?: Prisma.SortOrder
 }
 
 export type PropriedadeScalarRelationFilter = {
   is?: Prisma.propriedadeWhereInput
   isNot?: Prisma.propriedadeWhereInput
+}
+
+export type propriedadeCreateNestedManyWithoutEmpresaInput = {
+  create?: Prisma.XOR<Prisma.propriedadeCreateWithoutEmpresaInput, Prisma.propriedadeUncheckedCreateWithoutEmpresaInput> | Prisma.propriedadeCreateWithoutEmpresaInput[] | Prisma.propriedadeUncheckedCreateWithoutEmpresaInput[]
+  connectOrCreate?: Prisma.propriedadeCreateOrConnectWithoutEmpresaInput | Prisma.propriedadeCreateOrConnectWithoutEmpresaInput[]
+  createMany?: Prisma.propriedadeCreateManyEmpresaInputEnvelope
+  connect?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+}
+
+export type propriedadeUncheckedCreateNestedManyWithoutEmpresaInput = {
+  create?: Prisma.XOR<Prisma.propriedadeCreateWithoutEmpresaInput, Prisma.propriedadeUncheckedCreateWithoutEmpresaInput> | Prisma.propriedadeCreateWithoutEmpresaInput[] | Prisma.propriedadeUncheckedCreateWithoutEmpresaInput[]
+  connectOrCreate?: Prisma.propriedadeCreateOrConnectWithoutEmpresaInput | Prisma.propriedadeCreateOrConnectWithoutEmpresaInput[]
+  createMany?: Prisma.propriedadeCreateManyEmpresaInputEnvelope
+  connect?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+}
+
+export type propriedadeUpdateManyWithoutEmpresaNestedInput = {
+  create?: Prisma.XOR<Prisma.propriedadeCreateWithoutEmpresaInput, Prisma.propriedadeUncheckedCreateWithoutEmpresaInput> | Prisma.propriedadeCreateWithoutEmpresaInput[] | Prisma.propriedadeUncheckedCreateWithoutEmpresaInput[]
+  connectOrCreate?: Prisma.propriedadeCreateOrConnectWithoutEmpresaInput | Prisma.propriedadeCreateOrConnectWithoutEmpresaInput[]
+  upsert?: Prisma.propriedadeUpsertWithWhereUniqueWithoutEmpresaInput | Prisma.propriedadeUpsertWithWhereUniqueWithoutEmpresaInput[]
+  createMany?: Prisma.propriedadeCreateManyEmpresaInputEnvelope
+  set?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+  disconnect?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+  delete?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+  connect?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+  update?: Prisma.propriedadeUpdateWithWhereUniqueWithoutEmpresaInput | Prisma.propriedadeUpdateWithWhereUniqueWithoutEmpresaInput[]
+  updateMany?: Prisma.propriedadeUpdateManyWithWhereWithoutEmpresaInput | Prisma.propriedadeUpdateManyWithWhereWithoutEmpresaInput[]
+  deleteMany?: Prisma.propriedadeScalarWhereInput | Prisma.propriedadeScalarWhereInput[]
+}
+
+export type propriedadeUncheckedUpdateManyWithoutEmpresaNestedInput = {
+  create?: Prisma.XOR<Prisma.propriedadeCreateWithoutEmpresaInput, Prisma.propriedadeUncheckedCreateWithoutEmpresaInput> | Prisma.propriedadeCreateWithoutEmpresaInput[] | Prisma.propriedadeUncheckedCreateWithoutEmpresaInput[]
+  connectOrCreate?: Prisma.propriedadeCreateOrConnectWithoutEmpresaInput | Prisma.propriedadeCreateOrConnectWithoutEmpresaInput[]
+  upsert?: Prisma.propriedadeUpsertWithWhereUniqueWithoutEmpresaInput | Prisma.propriedadeUpsertWithWhereUniqueWithoutEmpresaInput[]
+  createMany?: Prisma.propriedadeCreateManyEmpresaInputEnvelope
+  set?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+  disconnect?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+  delete?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+  connect?: Prisma.propriedadeWhereUniqueInput | Prisma.propriedadeWhereUniqueInput[]
+  update?: Prisma.propriedadeUpdateWithWhereUniqueWithoutEmpresaInput | Prisma.propriedadeUpdateWithWhereUniqueWithoutEmpresaInput[]
+  updateMany?: Prisma.propriedadeUpdateManyWithWhereWithoutEmpresaInput | Prisma.propriedadeUpdateManyWithWhereWithoutEmpresaInput[]
+  deleteMany?: Prisma.propriedadeScalarWhereInput | Prisma.propriedadeScalarWhereInput[]
 }
 
 export type NullableFloatFieldUpdateOperationsInput = {
@@ -550,6 +632,80 @@ export type propriedadeUpdateOneRequiredWithoutOperacaoLogisticaNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.propriedadeUpdateToOneWithWhereWithoutOperacaoLogisticaInput, Prisma.propriedadeUpdateWithoutOperacaoLogisticaInput>, Prisma.propriedadeUncheckedUpdateWithoutOperacaoLogisticaInput>
 }
 
+export type propriedadeCreateWithoutEmpresaInput = {
+  nome: string
+  localizacao: string
+  municipio?: string | null
+  estado?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  areaTotal?: number | null
+  status?: string
+  dataCadastro?: Date | string
+  talhao?: Prisma.talhaoCreateNestedManyWithoutPropriedadeInput
+  usuarioPropriedade?: Prisma.usuarioPropriedadeCreateNestedManyWithoutPropriedadeInput
+  operacaoLogistica?: Prisma.operacaoLogisticaCreateNestedManyWithoutPropriedadeInput
+}
+
+export type propriedadeUncheckedCreateWithoutEmpresaInput = {
+  id?: number
+  nome: string
+  localizacao: string
+  municipio?: string | null
+  estado?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  areaTotal?: number | null
+  status?: string
+  dataCadastro?: Date | string
+  talhao?: Prisma.talhaoUncheckedCreateNestedManyWithoutPropriedadeInput
+  usuarioPropriedade?: Prisma.usuarioPropriedadeUncheckedCreateNestedManyWithoutPropriedadeInput
+  operacaoLogistica?: Prisma.operacaoLogisticaUncheckedCreateNestedManyWithoutPropriedadeInput
+}
+
+export type propriedadeCreateOrConnectWithoutEmpresaInput = {
+  where: Prisma.propriedadeWhereUniqueInput
+  create: Prisma.XOR<Prisma.propriedadeCreateWithoutEmpresaInput, Prisma.propriedadeUncheckedCreateWithoutEmpresaInput>
+}
+
+export type propriedadeCreateManyEmpresaInputEnvelope = {
+  data: Prisma.propriedadeCreateManyEmpresaInput | Prisma.propriedadeCreateManyEmpresaInput[]
+  skipDuplicates?: boolean
+}
+
+export type propriedadeUpsertWithWhereUniqueWithoutEmpresaInput = {
+  where: Prisma.propriedadeWhereUniqueInput
+  update: Prisma.XOR<Prisma.propriedadeUpdateWithoutEmpresaInput, Prisma.propriedadeUncheckedUpdateWithoutEmpresaInput>
+  create: Prisma.XOR<Prisma.propriedadeCreateWithoutEmpresaInput, Prisma.propriedadeUncheckedCreateWithoutEmpresaInput>
+}
+
+export type propriedadeUpdateWithWhereUniqueWithoutEmpresaInput = {
+  where: Prisma.propriedadeWhereUniqueInput
+  data: Prisma.XOR<Prisma.propriedadeUpdateWithoutEmpresaInput, Prisma.propriedadeUncheckedUpdateWithoutEmpresaInput>
+}
+
+export type propriedadeUpdateManyWithWhereWithoutEmpresaInput = {
+  where: Prisma.propriedadeScalarWhereInput
+  data: Prisma.XOR<Prisma.propriedadeUpdateManyMutationInput, Prisma.propriedadeUncheckedUpdateManyWithoutEmpresaInput>
+}
+
+export type propriedadeScalarWhereInput = {
+  AND?: Prisma.propriedadeScalarWhereInput | Prisma.propriedadeScalarWhereInput[]
+  OR?: Prisma.propriedadeScalarWhereInput[]
+  NOT?: Prisma.propriedadeScalarWhereInput | Prisma.propriedadeScalarWhereInput[]
+  id?: Prisma.IntFilter<"propriedade"> | number
+  nome?: Prisma.StringFilter<"propriedade"> | string
+  localizacao?: Prisma.StringFilter<"propriedade"> | string
+  municipio?: Prisma.StringNullableFilter<"propriedade"> | string | null
+  estado?: Prisma.StringNullableFilter<"propriedade"> | string | null
+  latitude?: Prisma.FloatNullableFilter<"propriedade"> | number | null
+  longitude?: Prisma.FloatNullableFilter<"propriedade"> | number | null
+  areaTotal?: Prisma.FloatNullableFilter<"propriedade"> | number | null
+  empresaId?: Prisma.IntNullableFilter<"propriedade"> | number | null
+  status?: Prisma.StringFilter<"propriedade"> | string
+  dataCadastro?: Prisma.DateTimeFilter<"propriedade"> | Date | string
+}
+
 export type propriedadeCreateWithoutUsuarioPropriedadeInput = {
   nome: string
   localizacao: string
@@ -560,6 +716,7 @@ export type propriedadeCreateWithoutUsuarioPropriedadeInput = {
   areaTotal?: number | null
   status?: string
   dataCadastro?: Date | string
+  empresa?: Prisma.empresaCreateNestedOneWithoutPropriedadeInput
   talhao?: Prisma.talhaoCreateNestedManyWithoutPropriedadeInput
   operacaoLogistica?: Prisma.operacaoLogisticaCreateNestedManyWithoutPropriedadeInput
 }
@@ -573,6 +730,7 @@ export type propriedadeUncheckedCreateWithoutUsuarioPropriedadeInput = {
   latitude?: number | null
   longitude?: number | null
   areaTotal?: number | null
+  empresaId?: number | null
   status?: string
   dataCadastro?: Date | string
   talhao?: Prisma.talhaoUncheckedCreateNestedManyWithoutPropriedadeInput
@@ -605,6 +763,7 @@ export type propriedadeUpdateWithoutUsuarioPropriedadeInput = {
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  empresa?: Prisma.empresaUpdateOneWithoutPropriedadeNestedInput
   talhao?: Prisma.talhaoUpdateManyWithoutPropriedadeNestedInput
   operacaoLogistica?: Prisma.operacaoLogisticaUpdateManyWithoutPropriedadeNestedInput
 }
@@ -618,6 +777,7 @@ export type propriedadeUncheckedUpdateWithoutUsuarioPropriedadeInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  empresaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   talhao?: Prisma.talhaoUncheckedUpdateManyWithoutPropriedadeNestedInput
@@ -634,6 +794,7 @@ export type propriedadeCreateWithoutTalhaoInput = {
   areaTotal?: number | null
   status?: string
   dataCadastro?: Date | string
+  empresa?: Prisma.empresaCreateNestedOneWithoutPropriedadeInput
   usuarioPropriedade?: Prisma.usuarioPropriedadeCreateNestedManyWithoutPropriedadeInput
   operacaoLogistica?: Prisma.operacaoLogisticaCreateNestedManyWithoutPropriedadeInput
 }
@@ -647,6 +808,7 @@ export type propriedadeUncheckedCreateWithoutTalhaoInput = {
   latitude?: number | null
   longitude?: number | null
   areaTotal?: number | null
+  empresaId?: number | null
   status?: string
   dataCadastro?: Date | string
   usuarioPropriedade?: Prisma.usuarioPropriedadeUncheckedCreateNestedManyWithoutPropriedadeInput
@@ -679,6 +841,7 @@ export type propriedadeUpdateWithoutTalhaoInput = {
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  empresa?: Prisma.empresaUpdateOneWithoutPropriedadeNestedInput
   usuarioPropriedade?: Prisma.usuarioPropriedadeUpdateManyWithoutPropriedadeNestedInput
   operacaoLogistica?: Prisma.operacaoLogisticaUpdateManyWithoutPropriedadeNestedInput
 }
@@ -692,6 +855,7 @@ export type propriedadeUncheckedUpdateWithoutTalhaoInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  empresaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   usuarioPropriedade?: Prisma.usuarioPropriedadeUncheckedUpdateManyWithoutPropriedadeNestedInput
@@ -708,6 +872,7 @@ export type propriedadeCreateWithoutOperacaoLogisticaInput = {
   areaTotal?: number | null
   status?: string
   dataCadastro?: Date | string
+  empresa?: Prisma.empresaCreateNestedOneWithoutPropriedadeInput
   talhao?: Prisma.talhaoCreateNestedManyWithoutPropriedadeInput
   usuarioPropriedade?: Prisma.usuarioPropriedadeCreateNestedManyWithoutPropriedadeInput
 }
@@ -721,6 +886,7 @@ export type propriedadeUncheckedCreateWithoutOperacaoLogisticaInput = {
   latitude?: number | null
   longitude?: number | null
   areaTotal?: number | null
+  empresaId?: number | null
   status?: string
   dataCadastro?: Date | string
   talhao?: Prisma.talhaoUncheckedCreateNestedManyWithoutPropriedadeInput
@@ -753,6 +919,7 @@ export type propriedadeUpdateWithoutOperacaoLogisticaInput = {
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  empresa?: Prisma.empresaUpdateOneWithoutPropriedadeNestedInput
   talhao?: Prisma.talhaoUpdateManyWithoutPropriedadeNestedInput
   usuarioPropriedade?: Prisma.usuarioPropriedadeUpdateManyWithoutPropriedadeNestedInput
 }
@@ -766,10 +933,68 @@ export type propriedadeUncheckedUpdateWithoutOperacaoLogisticaInput = {
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  empresaId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   talhao?: Prisma.talhaoUncheckedUpdateManyWithoutPropriedadeNestedInput
   usuarioPropriedade?: Prisma.usuarioPropriedadeUncheckedUpdateManyWithoutPropriedadeNestedInput
+}
+
+export type propriedadeCreateManyEmpresaInput = {
+  id?: number
+  nome: string
+  localizacao: string
+  municipio?: string | null
+  estado?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  areaTotal?: number | null
+  status?: string
+  dataCadastro?: Date | string
+}
+
+export type propriedadeUpdateWithoutEmpresaInput = {
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  localizacao?: Prisma.StringFieldUpdateOperationsInput | string
+  municipio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  talhao?: Prisma.talhaoUpdateManyWithoutPropriedadeNestedInput
+  usuarioPropriedade?: Prisma.usuarioPropriedadeUpdateManyWithoutPropriedadeNestedInput
+  operacaoLogistica?: Prisma.operacaoLogisticaUpdateManyWithoutPropriedadeNestedInput
+}
+
+export type propriedadeUncheckedUpdateWithoutEmpresaInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  localizacao?: Prisma.StringFieldUpdateOperationsInput | string
+  municipio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  talhao?: Prisma.talhaoUncheckedUpdateManyWithoutPropriedadeNestedInput
+  usuarioPropriedade?: Prisma.usuarioPropriedadeUncheckedUpdateManyWithoutPropriedadeNestedInput
+  operacaoLogistica?: Prisma.operacaoLogisticaUncheckedUpdateManyWithoutPropriedadeNestedInput
+}
+
+export type propriedadeUncheckedUpdateManyWithoutEmpresaInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  localizacao?: Prisma.StringFieldUpdateOperationsInput | string
+  municipio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  estado?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  areaTotal?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -830,8 +1055,10 @@ export type propriedadeSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   latitude?: boolean
   longitude?: boolean
   areaTotal?: boolean
+  empresaId?: boolean
   status?: boolean
   dataCadastro?: boolean
+  empresa?: boolean | Prisma.propriedade$empresaArgs<ExtArgs>
   talhao?: boolean | Prisma.propriedade$talhaoArgs<ExtArgs>
   usuarioPropriedade?: boolean | Prisma.propriedade$usuarioPropriedadeArgs<ExtArgs>
   operacaoLogistica?: boolean | Prisma.propriedade$operacaoLogisticaArgs<ExtArgs>
@@ -847,8 +1074,10 @@ export type propriedadeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   latitude?: boolean
   longitude?: boolean
   areaTotal?: boolean
+  empresaId?: boolean
   status?: boolean
   dataCadastro?: boolean
+  empresa?: boolean | Prisma.propriedade$empresaArgs<ExtArgs>
 }, ExtArgs["result"]["propriedade"]>
 
 export type propriedadeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -860,8 +1089,10 @@ export type propriedadeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   latitude?: boolean
   longitude?: boolean
   areaTotal?: boolean
+  empresaId?: boolean
   status?: boolean
   dataCadastro?: boolean
+  empresa?: boolean | Prisma.propriedade$empresaArgs<ExtArgs>
 }, ExtArgs["result"]["propriedade"]>
 
 export type propriedadeSelectScalar = {
@@ -873,23 +1104,30 @@ export type propriedadeSelectScalar = {
   latitude?: boolean
   longitude?: boolean
   areaTotal?: boolean
+  empresaId?: boolean
   status?: boolean
   dataCadastro?: boolean
 }
 
-export type propriedadeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "localizacao" | "municipio" | "estado" | "latitude" | "longitude" | "areaTotal" | "status" | "dataCadastro", ExtArgs["result"]["propriedade"]>
+export type propriedadeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "localizacao" | "municipio" | "estado" | "latitude" | "longitude" | "areaTotal" | "empresaId" | "status" | "dataCadastro", ExtArgs["result"]["propriedade"]>
 export type propriedadeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  empresa?: boolean | Prisma.propriedade$empresaArgs<ExtArgs>
   talhao?: boolean | Prisma.propriedade$talhaoArgs<ExtArgs>
   usuarioPropriedade?: boolean | Prisma.propriedade$usuarioPropriedadeArgs<ExtArgs>
   operacaoLogistica?: boolean | Prisma.propriedade$operacaoLogisticaArgs<ExtArgs>
   _count?: boolean | Prisma.PropriedadeCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type propriedadeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type propriedadeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type propriedadeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  empresa?: boolean | Prisma.propriedade$empresaArgs<ExtArgs>
+}
+export type propriedadeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  empresa?: boolean | Prisma.propriedade$empresaArgs<ExtArgs>
+}
 
 export type $propriedadePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "propriedade"
   objects: {
+    empresa: Prisma.$empresaPayload<ExtArgs> | null
     talhao: Prisma.$talhaoPayload<ExtArgs>[]
     usuarioPropriedade: Prisma.$usuarioPropriedadePayload<ExtArgs>[]
     operacaoLogistica: Prisma.$operacaoLogisticaPayload<ExtArgs>[]
@@ -903,6 +1141,7 @@ export type $propriedadePayload<ExtArgs extends runtime.Types.Extensions.Interna
     latitude: number | null
     longitude: number | null
     areaTotal: number | null
+    empresaId: number | null
     status: string
     dataCadastro: Date
   }, ExtArgs["result"]["propriedade"]>
@@ -1299,6 +1538,7 @@ readonly fields: propriedadeFieldRefs;
  */
 export interface Prisma__propriedadeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  empresa<T extends Prisma.propriedade$empresaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.propriedade$empresaArgs<ExtArgs>>): Prisma.Prisma__empresaClient<runtime.Types.Result.GetResult<Prisma.$empresaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   talhao<T extends Prisma.propriedade$talhaoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.propriedade$talhaoArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$talhaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   usuarioPropriedade<T extends Prisma.propriedade$usuarioPropriedadeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.propriedade$usuarioPropriedadeArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$usuarioPropriedadePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   operacaoLogistica<T extends Prisma.propriedade$operacaoLogisticaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.propriedade$operacaoLogisticaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$operacaoLogisticaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1339,6 +1579,7 @@ export interface propriedadeFieldRefs {
   readonly latitude: Prisma.FieldRef<"propriedade", 'Float'>
   readonly longitude: Prisma.FieldRef<"propriedade", 'Float'>
   readonly areaTotal: Prisma.FieldRef<"propriedade", 'Float'>
+  readonly empresaId: Prisma.FieldRef<"propriedade", 'Int'>
   readonly status: Prisma.FieldRef<"propriedade", 'String'>
   readonly dataCadastro: Prisma.FieldRef<"propriedade", 'DateTime'>
 }
@@ -1595,6 +1836,10 @@ export type propriedadeCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    */
   data: Prisma.propriedadeCreateManyInput | Prisma.propriedadeCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.propriedadeIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1665,6 +1910,10 @@ export type propriedadeUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many propriedades to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.propriedadeIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1731,6 +1980,25 @@ export type propriedadeDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many propriedades to delete.
    */
   limit?: number
+}
+
+/**
+ * propriedade.empresa
+ */
+export type propriedade$empresaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the empresa
+   */
+  select?: Prisma.empresaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the empresa
+   */
+  omit?: Prisma.empresaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.empresaInclude<ExtArgs> | null
+  where?: Prisma.empresaWhereInput
 }
 
 /**

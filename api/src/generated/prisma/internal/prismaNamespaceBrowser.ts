@@ -52,6 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   usuario: 'usuario',
+  auditLog: 'auditLog',
+  empresa: 'empresa',
+  usuarioEmpresa: 'usuarioEmpresa',
   propriedade: 'propriedade',
   usuarioPropriedade: 'usuarioPropriedade',
   cultura: 'cultura',
@@ -89,10 +92,54 @@ export const UsuarioScalarFieldEnum = {
   senha: 'senha',
   perfil: 'perfil',
   status: 'status',
-  dataCadastro: 'dataCadastro'
+  dataCadastro: 'dataCadastro',
+  tokenVersion: 'tokenVersion'
 } as const
 
 export type UsuarioScalarFieldEnum = (typeof UsuarioScalarFieldEnum)[keyof typeof UsuarioScalarFieldEnum]
+
+
+export const AuditLogScalarFieldEnum = {
+  id: 'id',
+  usuarioId: 'usuarioId',
+  acao: 'acao',
+  recurso: 'recurso',
+  recursoId: 'recursoId',
+  ipOrigem: 'ipOrigem',
+  dadosAntes: 'dadosAntes',
+  dadosDepois: 'dadosDepois',
+  criadoEm: 'criadoEm'
+} as const
+
+export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const EmpresaScalarFieldEnum = {
+  id: 'id',
+  razaoSocial: 'razaoSocial',
+  nomeFantasia: 'nomeFantasia',
+  cpfCnpj: 'cpfCnpj',
+  telefone: 'telefone',
+  email: 'email',
+  cidade: 'cidade',
+  estado: 'estado',
+  responsavel: 'responsavel',
+  status: 'status',
+  dataCadastro: 'dataCadastro'
+} as const
+
+export type EmpresaScalarFieldEnum = (typeof EmpresaScalarFieldEnum)[keyof typeof EmpresaScalarFieldEnum]
+
+
+export const UsuarioEmpresaScalarFieldEnum = {
+  id: 'id',
+  usuarioId: 'usuarioId',
+  empresaId: 'empresaId',
+  status: 'status',
+  dataAssociacao: 'dataAssociacao'
+} as const
+
+export type UsuarioEmpresaScalarFieldEnum = (typeof UsuarioEmpresaScalarFieldEnum)[keyof typeof UsuarioEmpresaScalarFieldEnum]
 
 
 export const PropriedadeScalarFieldEnum = {
@@ -104,6 +151,7 @@ export const PropriedadeScalarFieldEnum = {
   latitude: 'latitude',
   longitude: 'longitude',
   areaTotal: 'areaTotal',
+  empresaId: 'empresaId',
   status: 'status',
   dataCadastro: 'dataCadastro'
 } as const
@@ -161,6 +209,7 @@ export const DispositivoScalarFieldEnum = {
   talhaoId: 'talhaoId',
   codigo: 'codigo',
   nome: 'nome',
+  chaveApiHash: 'chaveApiHash',
   tipo: 'tipo',
   latitude: 'latitude',
   longitude: 'longitude',
@@ -207,7 +256,10 @@ export const AlertaScalarFieldEnum = {
   titulo: 'titulo',
   descricao: 'descricao',
   dataHora: 'dataHora',
-  visualizado: 'visualizado'
+  visualizado: 'visualizado',
+  resolvido: 'resolvido',
+  resolvidoEm: 'resolvidoEm',
+  dispositivoId: 'dispositivoId'
 } as const
 
 export type AlertaScalarFieldEnum = (typeof AlertaScalarFieldEnum)[keyof typeof AlertaScalarFieldEnum]
@@ -254,6 +306,14 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -268,4 +328,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

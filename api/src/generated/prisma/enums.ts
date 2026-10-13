@@ -13,7 +13,7 @@ export const Perfil = {
   ADMINISTRADOR: 'ADMINISTRADOR',
   GESTOR: 'GESTOR',
   TECNICO: 'TECNICO',
-  PRODUTOR: 'PRODUTOR'
+  AGRICULTOR: 'AGRICULTOR'
 } as const
 
 export type Perfil = (typeof Perfil)[keyof typeof Perfil]

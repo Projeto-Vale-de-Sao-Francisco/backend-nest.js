@@ -45,6 +45,7 @@ export type DispositivoMinAggregateOutputType = {
   talhaoId: number | null
   codigo: string | null
   nome: string | null
+  chaveApiHash: string | null
   tipo: string | null
   latitude: number | null
   longitude: number | null
@@ -58,6 +59,7 @@ export type DispositivoMaxAggregateOutputType = {
   talhaoId: number | null
   codigo: string | null
   nome: string | null
+  chaveApiHash: string | null
   tipo: string | null
   latitude: number | null
   longitude: number | null
@@ -71,6 +73,7 @@ export type DispositivoCountAggregateOutputType = {
   talhaoId: number
   codigo: number
   nome: number
+  chaveApiHash: number
   tipo: number
   latitude: number
   longitude: number
@@ -100,6 +103,7 @@ export type DispositivoMinAggregateInputType = {
   talhaoId?: true
   codigo?: true
   nome?: true
+  chaveApiHash?: true
   tipo?: true
   latitude?: true
   longitude?: true
@@ -113,6 +117,7 @@ export type DispositivoMaxAggregateInputType = {
   talhaoId?: true
   codigo?: true
   nome?: true
+  chaveApiHash?: true
   tipo?: true
   latitude?: true
   longitude?: true
@@ -126,6 +131,7 @@ export type DispositivoCountAggregateInputType = {
   talhaoId?: true
   codigo?: true
   nome?: true
+  chaveApiHash?: true
   tipo?: true
   latitude?: true
   longitude?: true
@@ -226,6 +232,7 @@ export type DispositivoGroupByOutputType = {
   talhaoId: number
   codigo: string
   nome: string
+  chaveApiHash: string | null
   tipo: string
   latitude: number | null
   longitude: number | null
@@ -262,6 +269,7 @@ export type dispositivoWhereInput = {
   talhaoId?: Prisma.IntFilter<"dispositivo"> | number
   codigo?: Prisma.StringFilter<"dispositivo"> | string
   nome?: Prisma.StringFilter<"dispositivo"> | string
+  chaveApiHash?: Prisma.StringNullableFilter<"dispositivo"> | string | null
   tipo?: Prisma.StringFilter<"dispositivo"> | string
   latitude?: Prisma.FloatNullableFilter<"dispositivo"> | number | null
   longitude?: Prisma.FloatNullableFilter<"dispositivo"> | number | null
@@ -271,6 +279,7 @@ export type dispositivoWhereInput = {
   talhao?: Prisma.XOR<Prisma.TalhaoScalarRelationFilter, Prisma.talhaoWhereInput>
   sensor?: Prisma.SensorListRelationFilter
   medicao?: Prisma.MedicaoListRelationFilter
+  alerta?: Prisma.AlertaListRelationFilter
 }
 
 export type dispositivoOrderByWithRelationInput = {
@@ -278,6 +287,7 @@ export type dispositivoOrderByWithRelationInput = {
   talhaoId?: Prisma.SortOrder
   codigo?: Prisma.SortOrder
   nome?: Prisma.SortOrder
+  chaveApiHash?: Prisma.SortOrderInput | Prisma.SortOrder
   tipo?: Prisma.SortOrder
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -287,11 +297,13 @@ export type dispositivoOrderByWithRelationInput = {
   talhao?: Prisma.talhaoOrderByWithRelationInput
   sensor?: Prisma.sensorOrderByRelationAggregateInput
   medicao?: Prisma.medicaoOrderByRelationAggregateInput
+  alerta?: Prisma.alertaOrderByRelationAggregateInput
 }
 
 export type dispositivoWhereUniqueInput = Prisma.AtLeast<{
   id?: number
   codigo?: string
+  chaveApiHash?: string
   AND?: Prisma.dispositivoWhereInput | Prisma.dispositivoWhereInput[]
   OR?: Prisma.dispositivoWhereInput[]
   NOT?: Prisma.dispositivoWhereInput | Prisma.dispositivoWhereInput[]
@@ -306,13 +318,15 @@ export type dispositivoWhereUniqueInput = Prisma.AtLeast<{
   talhao?: Prisma.XOR<Prisma.TalhaoScalarRelationFilter, Prisma.talhaoWhereInput>
   sensor?: Prisma.SensorListRelationFilter
   medicao?: Prisma.MedicaoListRelationFilter
-}, "id" | "codigo">
+  alerta?: Prisma.AlertaListRelationFilter
+}, "id" | "codigo" | "chaveApiHash">
 
 export type dispositivoOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   talhaoId?: Prisma.SortOrder
   codigo?: Prisma.SortOrder
   nome?: Prisma.SortOrder
+  chaveApiHash?: Prisma.SortOrderInput | Prisma.SortOrder
   tipo?: Prisma.SortOrder
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -334,6 +348,7 @@ export type dispositivoScalarWhereWithAggregatesInput = {
   talhaoId?: Prisma.IntWithAggregatesFilter<"dispositivo"> | number
   codigo?: Prisma.StringWithAggregatesFilter<"dispositivo"> | string
   nome?: Prisma.StringWithAggregatesFilter<"dispositivo"> | string
+  chaveApiHash?: Prisma.StringNullableWithAggregatesFilter<"dispositivo"> | string | null
   tipo?: Prisma.StringWithAggregatesFilter<"dispositivo"> | string
   latitude?: Prisma.FloatNullableWithAggregatesFilter<"dispositivo"> | number | null
   longitude?: Prisma.FloatNullableWithAggregatesFilter<"dispositivo"> | number | null
@@ -345,6 +360,7 @@ export type dispositivoScalarWhereWithAggregatesInput = {
 export type dispositivoCreateInput = {
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -354,6 +370,7 @@ export type dispositivoCreateInput = {
   talhao: Prisma.talhaoCreateNestedOneWithoutDispositivoInput
   sensor?: Prisma.sensorCreateNestedManyWithoutDispositivoInput
   medicao?: Prisma.medicaoCreateNestedManyWithoutDispositivoInput
+  alerta?: Prisma.alertaCreateNestedManyWithoutDispositivoInput
 }
 
 export type dispositivoUncheckedCreateInput = {
@@ -361,6 +378,7 @@ export type dispositivoUncheckedCreateInput = {
   talhaoId: number
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -369,11 +387,13 @@ export type dispositivoUncheckedCreateInput = {
   dataCadastro?: Date | string
   sensor?: Prisma.sensorUncheckedCreateNestedManyWithoutDispositivoInput
   medicao?: Prisma.medicaoUncheckedCreateNestedManyWithoutDispositivoInput
+  alerta?: Prisma.alertaUncheckedCreateNestedManyWithoutDispositivoInput
 }
 
 export type dispositivoUpdateInput = {
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -383,6 +403,7 @@ export type dispositivoUpdateInput = {
   talhao?: Prisma.talhaoUpdateOneRequiredWithoutDispositivoNestedInput
   sensor?: Prisma.sensorUpdateManyWithoutDispositivoNestedInput
   medicao?: Prisma.medicaoUpdateManyWithoutDispositivoNestedInput
+  alerta?: Prisma.alertaUpdateManyWithoutDispositivoNestedInput
 }
 
 export type dispositivoUncheckedUpdateInput = {
@@ -390,6 +411,7 @@ export type dispositivoUncheckedUpdateInput = {
   talhaoId?: Prisma.IntFieldUpdateOperationsInput | number
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -398,6 +420,7 @@ export type dispositivoUncheckedUpdateInput = {
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sensor?: Prisma.sensorUncheckedUpdateManyWithoutDispositivoNestedInput
   medicao?: Prisma.medicaoUncheckedUpdateManyWithoutDispositivoNestedInput
+  alerta?: Prisma.alertaUncheckedUpdateManyWithoutDispositivoNestedInput
 }
 
 export type dispositivoCreateManyInput = {
@@ -405,6 +428,7 @@ export type dispositivoCreateManyInput = {
   talhaoId: number
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -416,6 +440,7 @@ export type dispositivoCreateManyInput = {
 export type dispositivoUpdateManyMutationInput = {
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -429,6 +454,7 @@ export type dispositivoUncheckedUpdateManyInput = {
   talhaoId?: Prisma.IntFieldUpdateOperationsInput | number
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -452,6 +478,7 @@ export type dispositivoCountOrderByAggregateInput = {
   talhaoId?: Prisma.SortOrder
   codigo?: Prisma.SortOrder
   nome?: Prisma.SortOrder
+  chaveApiHash?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
@@ -472,6 +499,7 @@ export type dispositivoMaxOrderByAggregateInput = {
   talhaoId?: Prisma.SortOrder
   codigo?: Prisma.SortOrder
   nome?: Prisma.SortOrder
+  chaveApiHash?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
@@ -485,6 +513,7 @@ export type dispositivoMinOrderByAggregateInput = {
   talhaoId?: Prisma.SortOrder
   codigo?: Prisma.SortOrder
   nome?: Prisma.SortOrder
+  chaveApiHash?: Prisma.SortOrder
   tipo?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
@@ -503,6 +532,11 @@ export type dispositivoSumOrderByAggregateInput = {
 export type DispositivoScalarRelationFilter = {
   is?: Prisma.dispositivoWhereInput
   isNot?: Prisma.dispositivoWhereInput
+}
+
+export type DispositivoNullableScalarRelationFilter = {
+  is?: Prisma.dispositivoWhereInput | null
+  isNot?: Prisma.dispositivoWhereInput | null
 }
 
 export type dispositivoCreateNestedManyWithoutTalhaoInput = {
@@ -575,9 +609,26 @@ export type dispositivoUpdateOneRequiredWithoutMedicaoNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.dispositivoUpdateToOneWithWhereWithoutMedicaoInput, Prisma.dispositivoUpdateWithoutMedicaoInput>, Prisma.dispositivoUncheckedUpdateWithoutMedicaoInput>
 }
 
+export type dispositivoCreateNestedOneWithoutAlertaInput = {
+  create?: Prisma.XOR<Prisma.dispositivoCreateWithoutAlertaInput, Prisma.dispositivoUncheckedCreateWithoutAlertaInput>
+  connectOrCreate?: Prisma.dispositivoCreateOrConnectWithoutAlertaInput
+  connect?: Prisma.dispositivoWhereUniqueInput
+}
+
+export type dispositivoUpdateOneWithoutAlertaNestedInput = {
+  create?: Prisma.XOR<Prisma.dispositivoCreateWithoutAlertaInput, Prisma.dispositivoUncheckedCreateWithoutAlertaInput>
+  connectOrCreate?: Prisma.dispositivoCreateOrConnectWithoutAlertaInput
+  upsert?: Prisma.dispositivoUpsertWithoutAlertaInput
+  disconnect?: Prisma.dispositivoWhereInput | boolean
+  delete?: Prisma.dispositivoWhereInput | boolean
+  connect?: Prisma.dispositivoWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.dispositivoUpdateToOneWithWhereWithoutAlertaInput, Prisma.dispositivoUpdateWithoutAlertaInput>, Prisma.dispositivoUncheckedUpdateWithoutAlertaInput>
+}
+
 export type dispositivoCreateWithoutTalhaoInput = {
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -586,12 +637,14 @@ export type dispositivoCreateWithoutTalhaoInput = {
   dataCadastro?: Date | string
   sensor?: Prisma.sensorCreateNestedManyWithoutDispositivoInput
   medicao?: Prisma.medicaoCreateNestedManyWithoutDispositivoInput
+  alerta?: Prisma.alertaCreateNestedManyWithoutDispositivoInput
 }
 
 export type dispositivoUncheckedCreateWithoutTalhaoInput = {
   id?: number
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -600,6 +653,7 @@ export type dispositivoUncheckedCreateWithoutTalhaoInput = {
   dataCadastro?: Date | string
   sensor?: Prisma.sensorUncheckedCreateNestedManyWithoutDispositivoInput
   medicao?: Prisma.medicaoUncheckedCreateNestedManyWithoutDispositivoInput
+  alerta?: Prisma.alertaUncheckedCreateNestedManyWithoutDispositivoInput
 }
 
 export type dispositivoCreateOrConnectWithoutTalhaoInput = {
@@ -636,6 +690,7 @@ export type dispositivoScalarWhereInput = {
   talhaoId?: Prisma.IntFilter<"dispositivo"> | number
   codigo?: Prisma.StringFilter<"dispositivo"> | string
   nome?: Prisma.StringFilter<"dispositivo"> | string
+  chaveApiHash?: Prisma.StringNullableFilter<"dispositivo"> | string | null
   tipo?: Prisma.StringFilter<"dispositivo"> | string
   latitude?: Prisma.FloatNullableFilter<"dispositivo"> | number | null
   longitude?: Prisma.FloatNullableFilter<"dispositivo"> | number | null
@@ -647,6 +702,7 @@ export type dispositivoScalarWhereInput = {
 export type dispositivoCreateWithoutSensorInput = {
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -655,6 +711,7 @@ export type dispositivoCreateWithoutSensorInput = {
   dataCadastro?: Date | string
   talhao: Prisma.talhaoCreateNestedOneWithoutDispositivoInput
   medicao?: Prisma.medicaoCreateNestedManyWithoutDispositivoInput
+  alerta?: Prisma.alertaCreateNestedManyWithoutDispositivoInput
 }
 
 export type dispositivoUncheckedCreateWithoutSensorInput = {
@@ -662,6 +719,7 @@ export type dispositivoUncheckedCreateWithoutSensorInput = {
   talhaoId: number
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -669,6 +727,7 @@ export type dispositivoUncheckedCreateWithoutSensorInput = {
   dataInstalacao?: Date | string | null
   dataCadastro?: Date | string
   medicao?: Prisma.medicaoUncheckedCreateNestedManyWithoutDispositivoInput
+  alerta?: Prisma.alertaUncheckedCreateNestedManyWithoutDispositivoInput
 }
 
 export type dispositivoCreateOrConnectWithoutSensorInput = {
@@ -690,6 +749,7 @@ export type dispositivoUpdateToOneWithWhereWithoutSensorInput = {
 export type dispositivoUpdateWithoutSensorInput = {
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -698,6 +758,7 @@ export type dispositivoUpdateWithoutSensorInput = {
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   talhao?: Prisma.talhaoUpdateOneRequiredWithoutDispositivoNestedInput
   medicao?: Prisma.medicaoUpdateManyWithoutDispositivoNestedInput
+  alerta?: Prisma.alertaUpdateManyWithoutDispositivoNestedInput
 }
 
 export type dispositivoUncheckedUpdateWithoutSensorInput = {
@@ -705,6 +766,7 @@ export type dispositivoUncheckedUpdateWithoutSensorInput = {
   talhaoId?: Prisma.IntFieldUpdateOperationsInput | number
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -712,11 +774,13 @@ export type dispositivoUncheckedUpdateWithoutSensorInput = {
   dataInstalacao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   medicao?: Prisma.medicaoUncheckedUpdateManyWithoutDispositivoNestedInput
+  alerta?: Prisma.alertaUncheckedUpdateManyWithoutDispositivoNestedInput
 }
 
 export type dispositivoCreateWithoutMedicaoInput = {
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -725,6 +789,7 @@ export type dispositivoCreateWithoutMedicaoInput = {
   dataCadastro?: Date | string
   talhao: Prisma.talhaoCreateNestedOneWithoutDispositivoInput
   sensor?: Prisma.sensorCreateNestedManyWithoutDispositivoInput
+  alerta?: Prisma.alertaCreateNestedManyWithoutDispositivoInput
 }
 
 export type dispositivoUncheckedCreateWithoutMedicaoInput = {
@@ -732,6 +797,7 @@ export type dispositivoUncheckedCreateWithoutMedicaoInput = {
   talhaoId: number
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -739,6 +805,7 @@ export type dispositivoUncheckedCreateWithoutMedicaoInput = {
   dataInstalacao?: Date | string | null
   dataCadastro?: Date | string
   sensor?: Prisma.sensorUncheckedCreateNestedManyWithoutDispositivoInput
+  alerta?: Prisma.alertaUncheckedCreateNestedManyWithoutDispositivoInput
 }
 
 export type dispositivoCreateOrConnectWithoutMedicaoInput = {
@@ -760,6 +827,7 @@ export type dispositivoUpdateToOneWithWhereWithoutMedicaoInput = {
 export type dispositivoUpdateWithoutMedicaoInput = {
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -768,6 +836,7 @@ export type dispositivoUpdateWithoutMedicaoInput = {
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   talhao?: Prisma.talhaoUpdateOneRequiredWithoutDispositivoNestedInput
   sensor?: Prisma.sensorUpdateManyWithoutDispositivoNestedInput
+  alerta?: Prisma.alertaUpdateManyWithoutDispositivoNestedInput
 }
 
 export type dispositivoUncheckedUpdateWithoutMedicaoInput = {
@@ -775,6 +844,7 @@ export type dispositivoUncheckedUpdateWithoutMedicaoInput = {
   talhaoId?: Prisma.IntFieldUpdateOperationsInput | number
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -782,12 +852,92 @@ export type dispositivoUncheckedUpdateWithoutMedicaoInput = {
   dataInstalacao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sensor?: Prisma.sensorUncheckedUpdateManyWithoutDispositivoNestedInput
+  alerta?: Prisma.alertaUncheckedUpdateManyWithoutDispositivoNestedInput
+}
+
+export type dispositivoCreateWithoutAlertaInput = {
+  codigo: string
+  nome: string
+  chaveApiHash?: string | null
+  tipo?: string
+  latitude?: number | null
+  longitude?: number | null
+  status?: string
+  dataInstalacao?: Date | string | null
+  dataCadastro?: Date | string
+  talhao: Prisma.talhaoCreateNestedOneWithoutDispositivoInput
+  sensor?: Prisma.sensorCreateNestedManyWithoutDispositivoInput
+  medicao?: Prisma.medicaoCreateNestedManyWithoutDispositivoInput
+}
+
+export type dispositivoUncheckedCreateWithoutAlertaInput = {
+  id?: number
+  talhaoId: number
+  codigo: string
+  nome: string
+  chaveApiHash?: string | null
+  tipo?: string
+  latitude?: number | null
+  longitude?: number | null
+  status?: string
+  dataInstalacao?: Date | string | null
+  dataCadastro?: Date | string
+  sensor?: Prisma.sensorUncheckedCreateNestedManyWithoutDispositivoInput
+  medicao?: Prisma.medicaoUncheckedCreateNestedManyWithoutDispositivoInput
+}
+
+export type dispositivoCreateOrConnectWithoutAlertaInput = {
+  where: Prisma.dispositivoWhereUniqueInput
+  create: Prisma.XOR<Prisma.dispositivoCreateWithoutAlertaInput, Prisma.dispositivoUncheckedCreateWithoutAlertaInput>
+}
+
+export type dispositivoUpsertWithoutAlertaInput = {
+  update: Prisma.XOR<Prisma.dispositivoUpdateWithoutAlertaInput, Prisma.dispositivoUncheckedUpdateWithoutAlertaInput>
+  create: Prisma.XOR<Prisma.dispositivoCreateWithoutAlertaInput, Prisma.dispositivoUncheckedCreateWithoutAlertaInput>
+  where?: Prisma.dispositivoWhereInput
+}
+
+export type dispositivoUpdateToOneWithWhereWithoutAlertaInput = {
+  where?: Prisma.dispositivoWhereInput
+  data: Prisma.XOR<Prisma.dispositivoUpdateWithoutAlertaInput, Prisma.dispositivoUncheckedUpdateWithoutAlertaInput>
+}
+
+export type dispositivoUpdateWithoutAlertaInput = {
+  codigo?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dataInstalacao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  talhao?: Prisma.talhaoUpdateOneRequiredWithoutDispositivoNestedInput
+  sensor?: Prisma.sensorUpdateManyWithoutDispositivoNestedInput
+  medicao?: Prisma.medicaoUpdateManyWithoutDispositivoNestedInput
+}
+
+export type dispositivoUncheckedUpdateWithoutAlertaInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  talhaoId?: Prisma.IntFieldUpdateOperationsInput | number
+  codigo?: Prisma.StringFieldUpdateOperationsInput | string
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tipo?: Prisma.StringFieldUpdateOperationsInput | string
+  latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  dataInstalacao?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sensor?: Prisma.sensorUncheckedUpdateManyWithoutDispositivoNestedInput
+  medicao?: Prisma.medicaoUncheckedUpdateManyWithoutDispositivoNestedInput
 }
 
 export type dispositivoCreateManyTalhaoInput = {
   id?: number
   codigo: string
   nome: string
+  chaveApiHash?: string | null
   tipo?: string
   latitude?: number | null
   longitude?: number | null
@@ -799,6 +949,7 @@ export type dispositivoCreateManyTalhaoInput = {
 export type dispositivoUpdateWithoutTalhaoInput = {
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -807,12 +958,14 @@ export type dispositivoUpdateWithoutTalhaoInput = {
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sensor?: Prisma.sensorUpdateManyWithoutDispositivoNestedInput
   medicao?: Prisma.medicaoUpdateManyWithoutDispositivoNestedInput
+  alerta?: Prisma.alertaUpdateManyWithoutDispositivoNestedInput
 }
 
 export type dispositivoUncheckedUpdateWithoutTalhaoInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -821,12 +974,14 @@ export type dispositivoUncheckedUpdateWithoutTalhaoInput = {
   dataCadastro?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sensor?: Prisma.sensorUncheckedUpdateManyWithoutDispositivoNestedInput
   medicao?: Prisma.medicaoUncheckedUpdateManyWithoutDispositivoNestedInput
+  alerta?: Prisma.alertaUncheckedUpdateManyWithoutDispositivoNestedInput
 }
 
 export type dispositivoUncheckedUpdateManyWithoutTalhaoInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   codigo?: Prisma.StringFieldUpdateOperationsInput | string
   nome?: Prisma.StringFieldUpdateOperationsInput | string
+  chaveApiHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tipo?: Prisma.StringFieldUpdateOperationsInput | string
   latitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   longitude?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -843,11 +998,13 @@ export type dispositivoUncheckedUpdateManyWithoutTalhaoInput = {
 export type DispositivoCountOutputType = {
   sensor: number
   medicao: number
+  alerta: number
 }
 
 export type DispositivoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sensor?: boolean | DispositivoCountOutputTypeCountSensorArgs
   medicao?: boolean | DispositivoCountOutputTypeCountMedicaoArgs
+  alerta?: boolean | DispositivoCountOutputTypeCountAlertaArgs
 }
 
 /**
@@ -874,12 +1031,20 @@ export type DispositivoCountOutputTypeCountMedicaoArgs<ExtArgs extends runtime.T
   where?: Prisma.medicaoWhereInput
 }
 
+/**
+ * DispositivoCountOutputType without action
+ */
+export type DispositivoCountOutputTypeCountAlertaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.alertaWhereInput
+}
+
 
 export type dispositivoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   talhaoId?: boolean
   codigo?: boolean
   nome?: boolean
+  chaveApiHash?: boolean
   tipo?: boolean
   latitude?: boolean
   longitude?: boolean
@@ -889,6 +1054,7 @@ export type dispositivoSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   talhao?: boolean | Prisma.talhaoDefaultArgs<ExtArgs>
   sensor?: boolean | Prisma.dispositivo$sensorArgs<ExtArgs>
   medicao?: boolean | Prisma.dispositivo$medicaoArgs<ExtArgs>
+  alerta?: boolean | Prisma.dispositivo$alertaArgs<ExtArgs>
   _count?: boolean | Prisma.DispositivoCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["dispositivo"]>
 
@@ -897,6 +1063,7 @@ export type dispositivoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   talhaoId?: boolean
   codigo?: boolean
   nome?: boolean
+  chaveApiHash?: boolean
   tipo?: boolean
   latitude?: boolean
   longitude?: boolean
@@ -911,6 +1078,7 @@ export type dispositivoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   talhaoId?: boolean
   codigo?: boolean
   nome?: boolean
+  chaveApiHash?: boolean
   tipo?: boolean
   latitude?: boolean
   longitude?: boolean
@@ -925,6 +1093,7 @@ export type dispositivoSelectScalar = {
   talhaoId?: boolean
   codigo?: boolean
   nome?: boolean
+  chaveApiHash?: boolean
   tipo?: boolean
   latitude?: boolean
   longitude?: boolean
@@ -933,11 +1102,12 @@ export type dispositivoSelectScalar = {
   dataCadastro?: boolean
 }
 
-export type dispositivoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "talhaoId" | "codigo" | "nome" | "tipo" | "latitude" | "longitude" | "status" | "dataInstalacao" | "dataCadastro", ExtArgs["result"]["dispositivo"]>
+export type dispositivoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "talhaoId" | "codigo" | "nome" | "chaveApiHash" | "tipo" | "latitude" | "longitude" | "status" | "dataInstalacao" | "dataCadastro", ExtArgs["result"]["dispositivo"]>
 export type dispositivoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   talhao?: boolean | Prisma.talhaoDefaultArgs<ExtArgs>
   sensor?: boolean | Prisma.dispositivo$sensorArgs<ExtArgs>
   medicao?: boolean | Prisma.dispositivo$medicaoArgs<ExtArgs>
+  alerta?: boolean | Prisma.dispositivo$alertaArgs<ExtArgs>
   _count?: boolean | Prisma.DispositivoCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type dispositivoIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -953,12 +1123,14 @@ export type $dispositivoPayload<ExtArgs extends runtime.Types.Extensions.Interna
     talhao: Prisma.$talhaoPayload<ExtArgs>
     sensor: Prisma.$sensorPayload<ExtArgs>[]
     medicao: Prisma.$medicaoPayload<ExtArgs>[]
+    alerta: Prisma.$alertaPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     talhaoId: number
     codigo: string
     nome: string
+    chaveApiHash: string | null
     tipo: string
     latitude: number | null
     longitude: number | null
@@ -1362,6 +1534,7 @@ export interface Prisma__dispositivoClient<T, Null = never, ExtArgs extends runt
   talhao<T extends Prisma.talhaoDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.talhaoDefaultArgs<ExtArgs>>): Prisma.Prisma__talhaoClient<runtime.Types.Result.GetResult<Prisma.$talhaoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   sensor<T extends Prisma.dispositivo$sensorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.dispositivo$sensorArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$sensorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   medicao<T extends Prisma.dispositivo$medicaoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.dispositivo$medicaoArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$medicaoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  alerta<T extends Prisma.dispositivo$alertaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.dispositivo$alertaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$alertaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1395,6 +1568,7 @@ export interface dispositivoFieldRefs {
   readonly talhaoId: Prisma.FieldRef<"dispositivo", 'Int'>
   readonly codigo: Prisma.FieldRef<"dispositivo", 'String'>
   readonly nome: Prisma.FieldRef<"dispositivo", 'String'>
+  readonly chaveApiHash: Prisma.FieldRef<"dispositivo", 'String'>
   readonly tipo: Prisma.FieldRef<"dispositivo", 'String'>
   readonly latitude: Prisma.FieldRef<"dispositivo", 'Float'>
   readonly longitude: Prisma.FieldRef<"dispositivo", 'Float'>
@@ -1847,6 +2021,30 @@ export type dispositivo$medicaoArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.MedicaoScalarFieldEnum | Prisma.MedicaoScalarFieldEnum[]
+}
+
+/**
+ * dispositivo.alerta
+ */
+export type dispositivo$alertaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the alerta
+   */
+  select?: Prisma.alertaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the alerta
+   */
+  omit?: Prisma.alertaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.alertaInclude<ExtArgs> | null
+  where?: Prisma.alertaWhereInput
+  orderBy?: Prisma.alertaOrderByWithRelationInput | Prisma.alertaOrderByWithRelationInput[]
+  cursor?: Prisma.alertaWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AlertaScalarFieldEnum | Prisma.AlertaScalarFieldEnum[]
 }
 
 /**

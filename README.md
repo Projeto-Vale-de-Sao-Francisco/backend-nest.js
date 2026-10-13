@@ -1,184 +1,119 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-<h1 align="center">ValeVivo Backend</h1>
+# SIVALE — Sistema Inteligente do Vale
 
-<p align="center">
-  Tecnologia e Inteligência para a Agricultura do Vale do São Francisco 🍇🥭🌵
-</p>
-<p align="center">
-  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
-  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-</p>
-<p align="center">
-  <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow?style=flat-square" alt="Status" />
-  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
-</p>
----
+Projeto Integrador (UE Mobile · Senac Pernambuco): plataforma web em nuvem para monitoramento climático e logístico da fruticultura (manga e uva) do Vale do São Francisco. Este repositório cobre a **1ª entrega (13/10/2026)**: PWA + Backend + Banco de Dados, com o fluxo completo `sensor → API → banco → dashboard`.
 
-## Sobre o projeto
+## Estrutura
 
-O **ValeVivo Backend** é a API responsável por receber, processar e armazenar os dados de sensores do sistema **ValeVivo**, além de integrar com a plataforma **ThingSpeak** para leitura e escrita de telemetria. Construído com **NestJS** e **Prisma**, oferece uma base sólida, tipada e escalável para o restante da aplicação.
+```
+sivale/
+├── api/        API NestJS + Prisma + PostgreSQL (Swagger em /docs)
+├── frontend/   PWA React + Vite + TypeScript (mapa, painéis, cadastros)
+├── backend/    MVP antigo em Express + SQLite (legado; não é mais usado)
+└── docs/       Arquitetura, modelo do banco (ER), endpoints e roteiro da demo
+```
 
-## 📑 Sumário
+## Como rodar (local)
 
-- [🌱 Sobre o projeto](#-sobre-o-projeto)
-- [🛠️ Tecnologias utilizadas](#️-tecnologias-utilizadas)
-- [📋 Pré-requisitos](#-pré-requisitos)
-- [⚙️ Instalação](#️-instalação)
-- [🔐 Configuração das variáveis de ambiente](#-configuração-das-variáveis-de-ambiente)
-- [🚀 Executando o projeto](#-executando-o-projeto)
-- [📡 Endpoints](#-endpoints)
-- [📁 Estrutura do projeto](#-estrutura-do-projeto)
+Requisitos: Node.js 22 ou superior e npm.
+
+### 1. Banco de dados PostgreSQL
+
+Escolha uma opção:
+
+```bash
+cd api
+npm install
+cp .env.example .env     # no Windows: copy .env.example .env
+npm run db:dev           # Postgres embutido em localhost:5433 (sem Docker); deixe rodando
+```
+
+ou, com Docker: `docker compose up -d db` (também em `localhost:5433`). Para usar outro Postgres, ajuste `DATABASE_URL` no `.env`.
+
+### 2. API
+
+Em outro terminal, dentro de `api/`:
+
+```bash
+npx prisma migrate deploy   # cria as tabelas
+npx prisma db seed          # dados de exemplo (4 perfis, 2 propriedades, culturas, talhões, dispositivos, histórico)
+npm run build
+npm run start:prod          # http://localhost:3333  ·  documentação em /docs
+```
+
+Para desenvolver com recarga automática, use `npm run start:dev` no lugar do build e start.
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.example .env        # VITE_API_URL=http://localhost:3333
+npm run dev                 # http://localhost:5173
+```
+
+### 4. Simulador de sensores (substitui o ESP32)
+
+Com a API no ar, em `api/`:
+
+```bash
+npm run simulate            # uma rodada de leituras
+npm run simulate -- loop    # uma rodada a cada 30 s (10 % das leituras saem da faixa para gerar alertas)
+```
+
+Cada dispositivo se autentica com a própria chave (`x-device-key`); o simulador gera uma chave nova por execução.
+
+### Contas de teste
+
+Senha `123456` para todas: `admin@sivale.com.br` (Administrador), `gestor@sivale.com.br` (Gestor), `tecnico@sivale.com.br` (Técnico), `carlos@sivale.com.br` (Agricultor). Só o Administrador cadastra e edita; os demais consultam e tratam alertas ([perfis e telas](docs/PERFIS_E_TELAS.md)). Troque a senha e o `JWT_SECRET` fora do ambiente de desenvolvimento.
+
+## Verificação
+
+```bash
+cd api && npm run smoke       # com a API no ar: 90+ verificações de fluxo, perfis, escopo, regras e dashboards
+cd api && npm run build       # compila a API
+cd frontend && npm run build  # compila o PWA
+```
+
+No Windows, o runner localiza automaticamente o Git Bash instalado pelo Git for Windows.
+
+## Funcionalidades (requisitos da 1ª entrega)
+
+| Req. | Entrega |
+|---|---|
+| 1–2 | Cadastro de usuários (só administrador), login JWT, rotas protegidas, 4 perfis, escopo por empresa e propriedade, Meu perfil |
+| 3–7 | Empresas/produtores, propriedades (latitude e longitude), culturas, talhões, dispositivos e sensores |
+| 8–9 | Ingestão `POST /ingest/medicoes` com chave de dispositivo, consulta paginada e filtros por período |
+| 10–11 | Valores de mercado (cadastro manual ou botão **Atualizar valores**) e informações logísticas |
+| 12–13 | Mapa de satélite, painéis T1, T2 e P2, e tela de Histórico com filtros (propriedade, talhão, cultura, dispositivo e período) |
+| 14 | Alertas automáticos por faixa da cultura, sem repetição, com resolução; falha de sensor |
+| 15–16 | Fluxo integrado e documentação em [`docs/`](docs/) |
+
+## Documentação
+
+- [Perfis de acesso e telas](docs/PERFIS_E_TELAS.md): matriz de acesso por perfil
+- [Arquitetura](docs/ARQUITETURA.md): fluxo, componentes, segurança, regras de negócio e proposta multicloud da 2ª entrega
+- [Modelo do banco (ER)](docs/MODELO_BANCO.md)
+- [Endpoints](docs/ENDPOINTS.md) (e Swagger em `http://localhost:3333/docs`)
+- [Roteiro da demo e checklist de testes](docs/DEMO.md)
 
 ## Tecnologias
 
-| Camada         | Tecnologia |
-| -------------- | ---------- |
-| Runtime        | Node.js    |
-| Framework      | NestJS     |
-| Linguagem      | TypeScript |
-| ORM            | Prisma     |
-| Banco de dados | PostgreSQL |
-| HTTP Client    | Axios      |
-| Integração IoT | ThingSpeak |
+NestJS 12 · Prisma 7 · PostgreSQL · JWT + bcrypt · class-validator · Swagger · React 18 · Vite · TypeScript · Leaflet · Recharts · PWA (manifest + service worker).
 
-## Pré-requisitos
+## Variáveis de ambiente da API
 
-Antes de começar, tenha instalado em sua máquina:
+| Variável | Padrão | Uso |
+|---|---|---|
+| `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5433/sivale` | Conexão com o PostgreSQL |
+| `JWT_SECRET` / `JWT_EXPIRES_IN` | — / `8h` | Assinatura e validade do token |
+| `PORT` / `CORS_ORIGIN` | `3333` / `http://localhost:5173` | Porta e origens permitidas |
+| `MERCADO_FONTE_URL` | `./data/mercado-exemplo.json` | Fonte do botão "Atualizar valores" (URL http(s) ou arquivo JSON; o arquivo de exemplo tem valores ilustrativos) |
+| `ALERTA_JANELA_MIN` | `60` | Janela sem repetir o mesmo alerta |
+| `LIMITE_SEM_COMUNICACAO_MIN` | `30` | Minutos sem leitura para considerar falha de sensor |
+| `ALERTA_VERIFICAR_COMUNICACAO_MIN` | `5` | Frequência da verificação (0 desliga) |
+| `PESO_ALERTA_CRITICO` / `PESO_ALERTA_ATENCAO` | `5` / `2` | Pesos do score de prioridade (P2) |
+| `THINGSPEAK_*` | — | Integração opcional com ThingSpeak |
 
-* **Node.js**
-* **npm**
-* **Git**
+## Próximos passos (2ª entrega · 08/12/2026)
 
-> Também é necessário ter acesso ao banco de dados **PostgreSQL** utilizado pelo projeto.
-
-## Instalação
-
-**1.** Clone o repositório:
-
-```bash
-git clone https://github.com/Projeto-Vale-de-Sao-Francisco/SIVALE-backend-node.js.git
-```
-
-**2.** Entre na pasta do backend:
-
-```bash
-cd SIVALE-backend-node.js/backend
-```
-
-**3.** Instale as dependências:
-
-```bash
-npm install
-```
-
-## Variáveis de ambiente
-
-Crie um arquivo `.env` dentro da pasta `backend/` seguindo o modelo abaixo:
-
-```env
-DATABASE_URL="sua_url_de_conexao_postgresql"
- 
-THINGSPEAK_CHANNEL_ID="seu_channel_id"
-THINGSPEAK_WRITE_API_KEY="sua_write_api_key"
-THINGSPEAK_READ_API_KEY="sua_read_api_key"
-```
-
-> **Atenção**
->
-> * Se a conexão com o PostgreSQL utilizar certificado SSL, coloque o arquivo `ca.pem` na raiz da pasta `backend/`.
-> * Os arquivos `.env` e `ca.pem` **nunca** devem ser enviados para o repositório.
-
-## Prisma
-
-Gerar o Prisma Client:
-
-```bash
-npx prisma generate
-```
-
-Atualizar o schema do Prisma a partir do banco de dados:
-
-```bash
-npx prisma db pull
-```
-
-## Banco de dados
-
-Para popular o banco com dados iniciais de desenvolvimento:
-
-```bash
-npx prisma db seed
-```
-
-## Executando o projeto
-
-```bash
-npm run start:dev
-```
-
-Por padrão, o servidor sobe em:
-
-```text
-http://localhost:3000
-```
-
-## Scripts disponíveis
-
-| Comando               | Descrição                                       |
-| --------------------- | ----------------------------------------------- |
-| `npm run start`       | Executa o projeto                               |
-| `npm run start:dev`   | Executa em modo de desenvolvimento (watch mode) |
-| `npm run start:prod`  | Executa em modo de produção                     |
-| `npx prisma generate` | Gera o Prisma Client                            |
-| `npx prisma db pull`  | Atualiza o schema a partir do banco             |
-| `npx prisma db seed`  | Popula o banco com dados iniciais               |
-| `npm test`            | Executa os testes                               |
-| `npm run build`       | Compila e valida o projeto                      |
-
-## Estrutura do projeto
-
-```text
-backend/
-├── prisma/
-│   ├── schema.prisma      # Schema do banco de dados
-│   └── seed.ts            # Script de seed
-├── src/
-│   ├── prisma/            # Módulo de conexão com o Prisma
-│   ├── thingspeak/        # Integração com a API ThingSpeak
-│   ├── app.module.ts      # Módulo raiz da aplicação
-│   └── main.ts            # Ponto de entrada
-├── .env                    # Variáveis de ambiente (não versionado)
-├── ca.pem                  # Certificado SSL (não versionado)
-├── package.json
-├── prisma.config.ts
-└── tsconfig.json
-```
-
-## Fluxo rápido de desenvolvimento
-
-Após configurar o `.env`, siga esta sequência para colocar o projeto no ar:
-
-```bash
-npm install
-npx prisma generate
-npx prisma db seed
-npm run start:dev
-```
-
-O backend estará disponível em:
-
-```text
-http://localhost:3000
-```
-
----
-
-<p align="center">
-  Desenvolvido para o <strong>Projeto Vale São Francisco</strong>
-</p>
-
+Deploy em nuvem com Terraform (proposta AWS + Azure em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md)), pipeline e análise de dados em Python (janela de colheita e exportação), dashboards T3, P1, P3 e P4 (exigem a entidade `Colheita`), testes automatizados, monitoramento e relatório de segurança.

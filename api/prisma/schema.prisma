@@ -1,0 +1,260 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Perfil {
+  ADMINISTRADOR
+  GESTOR
+  TECNICO
+  AGRICULTOR
+}
+
+enum NivelAlerta {
+  ATENCAO
+  CRITICO
+}
+
+enum OrigemValor {
+  MANUAL
+  ATUALIZACAO
+}
+
+model usuario {
+  id                 Int                  @id @default(autoincrement())
+  nomeCompleto       String
+  cpf                String               @unique
+  email              String               @unique
+  telefone           String?
+  senha              String
+  perfil             Perfil               @default(AGRICULTOR)
+  status             String               @default("ATIVO")
+  dataCadastro       DateTime             @default(now()) @db.Timestamptz(6)
+  tokenVersion       Int                  @default(0)
+  usuarioPropriedade usuarioPropriedade[]
+  usuarioEmpresa     usuarioEmpresa[]
+  auditLog           auditLog[]
+}
+
+model auditLog {
+  id          Int      @id @default(autoincrement())
+  usuarioId   Int?
+  acao        String
+  recurso     String
+  recursoId   String?
+  ipOrigem    String?
+  dadosAntes  Json?
+  dadosDepois Json?
+  criadoEm    DateTime @default(now()) @db.Timestamptz(6)
+  usuario     usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId, criadoEm])
+}
+
+// Produtor rural, cooperativa ou empresa exportadora que usa a plataforma.
+model empresa {
+  id             Int              @id @default(autoincrement())
+  razaoSocial    String
+  nomeFantasia   String?
+  cpfCnpj        String           @unique
+  telefone       String?
+  email          String?
+  cidade         String?
+  estado         String?
+  responsavel    String?
+  status         String           @default("ATIVO")
+  dataCadastro   DateTime         @default(now()) @db.Timestamptz(6)
+  usuarioEmpresa usuarioEmpresa[]
+  propriedade    propriedade[]
+}
+
+// Vinculo N:N entre usuario e empresa: o GESTOR enxerga todas as propriedades das empresas a que esta vinculado.
+model usuarioEmpresa {
+  id             Int      @id @default(autoincrement())
+  usuarioId      Int
+  empresaId      Int
+  status         String   @default("ATIVO")
+  dataAssociacao DateTime @default(now()) @db.Timestamptz(6)
+  usuario        usuario  @relation(fields: [usuarioId], references: [id])
+  empresa        empresa  @relation(fields: [empresaId], references: [id])
+
+  @@unique([usuarioId, empresaId])
+  @@index([empresaId])
+}
+
+model propriedade {
+  id                 Int                  @id @default(autoincrement())
+  nome               String
+  localizacao        String
+  municipio          String?
+  estado             String?
+  latitude           Float?
+  longitude          Float?
+  areaTotal          Float?
+  empresaId          Int?
+  status             String               @default("ATIVO")
+  dataCadastro       DateTime             @default(now()) @db.Timestamptz(6)
+  empresa            empresa?             @relation(fields: [empresaId], references: [id])
+  talhao             talhao[]
+  usuarioPropriedade usuarioPropriedade[]
+  operacaoLogistica  operacaoLogistica[]
+}
+
+model usuarioPropriedade {
+  id             Int         @id @default(autoincrement())
+  usuarioId      Int
+  propriedadeId  Int
+  status         String      @default("ATIVO")
+  dataAssociacao DateTime    @default(now()) @db.Timestamptz(6)
+  usuario        usuario     @relation(fields: [usuarioId], references: [id])
+  propriedade    propriedade @relation(fields: [propriedadeId], references: [id])
+
+  @@unique([usuarioId, propriedadeId])
+  @@index([propriedadeId])
+}
+
+model cultura {
+  id             Int            @id @default(autoincrement())
+  nome           String
+  variedade      String?
+  temperaturaMin Float
+  temperaturaMax Float
+  umidadeMin     Float
+  umidadeMax     Float
+  cicloMedioDias Int?
+  descricao      String?
+  dataCadastro   DateTime       @default(now()) @db.Timestamptz(6)
+  talhao         talhao[]
+  valorMercado   valorMercado[]
+}
+
+model talhao {
+  id                Int                 @id @default(autoincrement())
+  propriedadeId     Int
+  culturaId         Int?
+  nome              String
+  descricao         String?
+  latitude          Float?
+  longitude         Float?
+  area              Float?
+  dataPlantio       DateTime?           @db.Date
+  previsaoColheita  DateTime?           @db.Date
+  status            String              @default("ATIVO")
+  dataCadastro      DateTime            @default(now()) @db.Timestamptz(6)
+  propriedade       propriedade         @relation(fields: [propriedadeId], references: [id])
+  cultura           cultura?            @relation(fields: [culturaId], references: [id])
+  dispositivo       dispositivo[]
+  alerta            alerta[]
+  operacaoLogistica operacaoLogistica[]
+
+  @@index([propriedadeId])
+  @@index([culturaId])
+}
+
+model dispositivo {
+  id             Int       @id @default(autoincrement())
+  talhaoId       Int
+  codigo         String    @unique
+  nome           String
+  chaveApiHash   String?   @unique
+  tipo           String    @default("ESP32")
+  latitude       Float?
+  longitude      Float?
+  status         String    @default("ATIVO")
+  dataInstalacao DateTime? @db.Timestamptz(6)
+  dataCadastro   DateTime  @default(now()) @db.Timestamptz(6)
+  talhao         talhao    @relation(fields: [talhaoId], references: [id])
+  sensor         sensor[]
+  medicao        medicao[]
+  alerta         alerta[]
+
+  @@index([talhaoId])
+}
+
+model sensor {
+  id            Int         @id @default(autoincrement())
+  dispositivoId Int
+  tipo          String
+  unidadeMedida String
+  status        String      @default("ATIVO")
+  dataCadastro  DateTime    @default(now()) @db.Timestamptz(6)
+  dispositivo   dispositivo @relation(fields: [dispositivoId], references: [id])
+
+  @@index([dispositivoId])
+}
+
+// Uma medicao e uma coleta conjunta de temperatura + umidade de um dispositivo.
+model medicao {
+  id            Int         @id @default(autoincrement())
+  dispositivoId Int
+  dataHora      DateTime    @db.Timestamptz(6)
+  temperatura   Float
+  umidade       Float
+  umidadeSolo   Float?
+  luminosidade  Float?
+  precipitacao  Float?
+  dispositivo   dispositivo @relation(fields: [dispositivoId], references: [id])
+  alerta        alerta[]
+
+  @@index([dispositivoId, dataHora])
+}
+
+model alerta {
+  id            Int          @id @default(autoincrement())
+  talhaoId      Int
+  medicaoId     Int?
+  tipo          String       @default("CLIMATICO")
+  nivel         NivelAlerta  @default(ATENCAO)
+  titulo        String
+  descricao     String
+  dataHora      DateTime     @default(now()) @db.Timestamptz(6)
+  visualizado   Boolean      @default(false)
+  resolvido     Boolean      @default(false)
+  resolvidoEm   DateTime?    @db.Timestamptz(6)
+  dispositivoId Int?
+  talhao        talhao       @relation(fields: [talhaoId], references: [id])
+  medicao       medicao?     @relation(fields: [medicaoId], references: [id])
+  dispositivo   dispositivo? @relation(fields: [dispositivoId], references: [id])
+
+  @@index([talhaoId, visualizado])
+  @@index([dispositivoId, titulo, resolvido])
+}
+
+// Valores de mercado / exportacao por cultura. Atualizados manualmente ou pelo botao "Atualizar" do site.
+model valorMercado {
+  id              Int         @id @default(autoincrement())
+  culturaId       Int
+  mercadoDestino  String
+  precoMedio      Float
+  moeda           String      @default("BRL")
+  dataReferencia  DateTime    @db.Date
+  demandaEstimada String?
+  origem          OrigemValor @default(MANUAL)
+  dataCadastro    DateTime    @default(now()) @db.Timestamptz(6)
+  cultura         cultura     @relation(fields: [culturaId], references: [id])
+
+  @@index([culturaId, dataReferencia])
+}
+
+model operacaoLogistica {
+  id             Int         @id @default(autoincrement())
+  propriedadeId  Int
+  talhaoId       Int?
+  origem         String
+  destino        String
+  modal          String
+  dataPrevista   DateTime?   @db.Date
+  tempoEstimado  String?
+  custoEstimado  Float?
+  transportadora String?
+  situacao       String      @default("PLANEJADA")
+  dataCadastro   DateTime    @default(now()) @db.Timestamptz(6)
+  propriedade    propriedade @relation(fields: [propriedadeId], references: [id])
+  talhao         talhao?     @relation(fields: [talhaoId], references: [id])
+
+  @@index([propriedadeId])
+}

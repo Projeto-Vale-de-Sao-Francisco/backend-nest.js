@@ -1,0 +1,72 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+build/
+
+# Prisma
+src/generated/prisma/
+generated/prisma/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Certificado SSL
+ca.pem
+
+# Testes
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Sistema operacional
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Arquivos temporários
+.temp/
+.tmp/
+
+# Runtime
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Relatórios de diagnóstico
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Ferramentas locais de IA
+.agents/
+.claude/
+.windsurf/
+
+backend/src/generated/
+.pgdata/
