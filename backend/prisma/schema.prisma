@@ -319,3 +319,43 @@ model Alerta {
 
   medicao Medicao @relation(fields: [medicao_id], references: [id])
 }
+
+model Pipeline_Execucao {
+  id                      Int                 @id @default(autoincrement())
+  source                  String
+  status                  String
+  started_at              DateTime            @default(now())
+  finished_at             DateTime?
+  duration_ms             Int?
+  total_received          Int                 @default(0)
+  total_processed         Int                 @default(0)
+  total_valid             Int                 @default(0)
+  total_corrected         Int                 @default(0)
+  total_filled            Int                 @default(0)
+  total_duplicates_removed Int                @default(0)
+  total_invalid           Int                 @default(0)
+  total_outliers          Int                 @default(0)
+  total_discarded         Int                 @default(0)
+  summary_json            Json?
+  created_at              DateTime            @default(now())
+
+  problemas               Pipeline_Problema[]
+
+  @@index([source, started_at])
+}
+
+model Pipeline_Problema {
+  id               Int               @id @default(autoincrement())
+  execution_id     Int
+  source           String
+  tipo_dado        String
+  tipo_problema    String
+  quantidade       Int               @default(0)
+  motivo           String?
+  detalhes         Json?
+  created_at       DateTime          @default(now())
+
+  execution        Pipeline_Execucao @relation(fields: [execution_id], references: [id])
+
+  @@index([execution_id])
+}

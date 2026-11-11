@@ -2,10 +2,12 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AlertsService } from '../alerts/alerts.service.js';
+import { PipelineService } from '../pipeline/pipeline.service.js';
 import { CreateReadingDto } from './dto/create-reading.dto.js';
 
 @Injectable()
@@ -13,6 +15,7 @@ export class ReadingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly alertsService: AlertsService,
+    @Optional() private readonly pipelineService?: PipelineService,
   ) {}
 
   /**
@@ -58,6 +61,79 @@ export class ReadingsService {
         medicao.id,
         sensor.id,
       );
+
+      if (this.pipelineService) {
+        await this.pipelineService.executeAutomatic([
+          {
+            source: 'sensor' as const,
+            id: medicao.id,
+            sensorId: sensor.id,
+            variable: 'temperatura',
+            value: dto.temperatura,
+            unit: sensor.unidade_medida,
+            timestamp: medicao.data_hora,
+            location: (sensor as any).dispositivo?.talhao?.nome ?? null,
+          },
+          {
+            source: 'sensor' as const,
+            id: medicao.id,
+            sensorId: sensor.id,
+            variable: 'umidade',
+            value: dto.umidade,
+            unit: sensor.unidade_medida,
+            timestamp: medicao.data_hora,
+            location: (sensor as any).dispositivo?.talhao?.nome ?? null,
+          },
+          ...(dto.umidadeSolo !== undefined && dto.umidadeSolo !== null
+            ? [{
+                source: 'sensor' as const,
+                id: medicao.id,
+                sensorId: sensor.id,
+                variable: 'umidade_solo',
+                value: dto.umidadeSolo,
+                unit: '%',
+                timestamp: medicao.data_hora,
+                location: (sensor as any).dispositivo?.talhao?.nome ?? null,
+              }]
+            : []),
+          ...(dto.luminosidade !== undefined && dto.luminosidade !== null
+            ? [{
+                source: 'sensor' as const,
+                id: medicao.id,
+                sensorId: sensor.id,
+                variable: 'luminosidade',
+                value: dto.luminosidade,
+                unit: 'lux',
+                timestamp: medicao.data_hora,
+                location: (sensor as any).dispositivo?.talhao?.nome ?? null,
+              }]
+            : []),
+          ...(dto.precipitacao !== undefined && dto.precipitacao !== null
+            ? [{
+                source: 'sensor' as const,
+                id: medicao.id,
+                sensorId: sensor.id,
+                variable: 'precipitacao',
+                value: dto.precipitacao,
+                unit: 'mm',
+                timestamp: medicao.data_hora,
+                location: (sensor as any).dispositivo?.talhao?.nome ?? null,
+              }]
+            : []),
+          ...(dto.pressao !== undefined && dto.pressao !== null
+            ? [{
+                source: 'sensor' as const,
+                id: medicao.id,
+                sensorId: sensor.id,
+                variable: 'pressao',
+                value: dto.pressao,
+                unit: 'hPa',
+                timestamp: medicao.data_hora,
+                location: (sensor as any).dispositivo?.talhao?.nome ?? null,
+              }]
+            : []),
+        ] as any);
+      }
 
       return {
         sucesso: true,
