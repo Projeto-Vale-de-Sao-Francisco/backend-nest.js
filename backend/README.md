@@ -49,6 +49,20 @@ npm test          # Suíte de testes unitários com Vitest
 npm run build     # Compilação TypeScript de produção
 ```
 
+## Pipeline de ingestão e qualidade de dados
+
+O backend inclui um módulo de pipeline de qualidade (`src/pipeline`) para padronizar registros de sensores, climáticos, mercado e câmbio antes de consumo analítico. O serviço centraliza:
+
+- normalização de datas e fusos em UTC;
+- identificação de valores ausentes e descarte automático;
+- remoção de duplicados por chave determinística;
+- marcação de outliers como suspeitos sem apagar o dado original;
+- conversão e padronização de moedas e unidades;
+- persistência de execuções e problemas em tabelas `Pipeline_Execucao` e `Pipeline_Problema`;
+- endpoints REST em `/pipeline/executar`, `/pipeline/execucoes`, `/pipeline/execucoes/:id` e `/pipeline/execucoes/:id/relatorio`.
+
+A execução automática também é disparada após gravações válidas de leituras em `ReadingsService`.
+
 ## Usuários e autenticação
 
 Copie `.env.example` para `.env` e defina valores seguros. Para o administrador
