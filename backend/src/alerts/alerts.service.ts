@@ -1,16 +1,28 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
+import {
+  authorizedPropertyIds,
+  type PropertyActor,
+} from '../common/property-access.js';
 
 @Injectable()
 export class AlertsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   /**
    * Avalia uma medição recente contra os limites climáticos da cultura cadastrada no talhão.
    * Atende aos requisitos 9.1 (gerar alerta fora da faixa), 9.2 (mensagem legível)
    * e 9.5 (evitar duplicidade em sequência).
    */
-  async checkAndCreateAlerts(medicaoId: number, sensorId: number) {
+  async checkAndCreateAlerts(
+    medicaoId: number,
+    sensorId: number,
+    ipOrigem?: string,
+  ) {
     const medicao = await this.prisma.medicao.findUnique({
       where: { id: medicaoId },
     });
@@ -67,8 +79,8 @@ export class AlertsService {
         );
 
         if (!jaExiste) {
-          const alerta = await this.prisma.alerta.create({
-            data: {
+          const alerta = await this.createAuditedAlert(
+            {
               medicao_id: medicao.id,
               tipo: 'TEMPERATURA_ALTA',
               nivel: 'CRITICO',
@@ -78,7 +90,8 @@ export class AlertsService {
               visualizado: false,
               status: 'ativo',
             },
-          });
+            ipOrigem,
+          );
           createdAlerts.push(alerta);
         }
       }
@@ -95,8 +108,8 @@ export class AlertsService {
         );
 
         if (!jaExiste) {
-          const alerta = await this.prisma.alerta.create({
-            data: {
+          const alerta = await this.createAuditedAlert(
+            {
               medicao_id: medicao.id,
               tipo: 'TEMPERATURA_BAIXA',
               nivel: 'ALERTA',
@@ -106,7 +119,8 @@ export class AlertsService {
               visualizado: false,
               status: 'ativo',
             },
-          });
+            ipOrigem,
+          );
           createdAlerts.push(alerta);
         }
       }
@@ -120,8 +134,8 @@ export class AlertsService {
         const jaExiste = await this.hasRecentAlert(sensorId, 'UMIDADE_ALTA');
 
         if (!jaExiste) {
-          const alerta = await this.prisma.alerta.create({
-            data: {
+          const alerta = await this.createAuditedAlert(
+            {
               medicao_id: medicao.id,
               tipo: 'UMIDADE_ALTA',
               nivel: 'ALERTA',
@@ -131,7 +145,8 @@ export class AlertsService {
               visualizado: false,
               status: 'ativo',
             },
-          });
+            ipOrigem,
+          );
           createdAlerts.push(alerta);
         }
       }
@@ -145,8 +160,8 @@ export class AlertsService {
         const jaExiste = await this.hasRecentAlert(sensorId, 'UMIDADE_BAIXA');
 
         if (!jaExiste) {
-          const alerta = await this.prisma.alerta.create({
-            data: {
+          const alerta = await this.createAuditedAlert(
+            {
               medicao_id: medicao.id,
               tipo: 'UMIDADE_BAIXA',
               nivel: 'CRITICO',
@@ -156,7 +171,8 @@ export class AlertsService {
               visualizado: false,
               status: 'ativo',
             },
-          });
+            ipOrigem,
+          );
           createdAlerts.push(alerta);
         }
       }
@@ -189,6 +205,34 @@ export class AlertsService {
     return !!recent;
   }
 
+  private async createAuditedAlert(
+    data: {
+      medicao_id: number;
+      tipo: string;
+      nivel: string;
+      titulo: string;
+      descricao: string;
+      data_hora: Date;
+      visualizado: boolean;
+      status: string;
+    },
+    ipOrigem?: string,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const alerta = await tx.alerta.create({ data });
+      await this.audit.record(
+        {
+          acao: 'GERAR',
+          recurso: 'ALERTA',
+          recursoId: alerta.id,
+          ipOrigem,
+        },
+        tx,
+      );
+      return alerta;
+    });
+  }
+
   /**
    * Requisito 9.2 e 9.3: Lista alertas com filtros opcionais (status, visualizado, talhão).
    */
@@ -196,8 +240,11 @@ export class AlertsService {
     status?: string;
     visualizado?: boolean;
     talhaoId?: number;
-  }) {
+  }, actor?: PropertyActor) {
     const where: any = {};
+    const propertyIds = actor
+      ? await authorizedPropertyIds(this.prisma, actor)
+      : [];
 
     if (filters?.status) {
       where.status = filters.status;
@@ -212,6 +259,22 @@ export class AlertsService {
         sensor: {
           dispositivo: {
             talhao_id: filters.talhaoId,
+          },
+        },
+      };
+    }
+
+    if (propertyIds !== null) {
+      where.medicao = {
+        ...where.medicao,
+        sensor: {
+          ...where.medicao?.sensor,
+          dispositivo: {
+            ...where.medicao?.sensor?.dispositivo,
+            talhao: {
+              ...where.medicao?.sensor?.dispositivo?.talhao,
+              propriedade_id: { in: propertyIds },
+            },
           },
         },
       };
@@ -243,40 +306,106 @@ export class AlertsService {
   /**
    * Requisito 9.3: Alertas ativos para exibição em destaque no Dashboard.
    */
-  async findActive() {
-    return this.findAll({ status: 'ativo' });
+  async findActive(actor?: PropertyActor) {
+    return this.findAll({ status: 'ativo' }, actor);
   }
 
   /**
    * Requisito 9.4: Marcar alerta como visualizado.
    */
-  async markAsViewed(id: number) {
-    const alerta = await this.prisma.alerta.findUnique({ where: { id } });
+  async markAsViewed(
+    id: number,
+    actor?: PropertyActor,
+    ipOrigem?: string,
+  ) {
+    const propertyIds = actor
+      ? await authorizedPropertyIds(this.prisma, actor)
+      : [];
+    const alerta = await this.prisma.alerta.findFirst({
+      where: {
+        id,
+        ...(propertyIds === null
+          ? {}
+          : {
+              medicao: {
+                sensor: {
+                  dispositivo: {
+                    talhao: { propriedade_id: { in: propertyIds } },
+                  },
+                },
+              },
+            }),
+      },
+    });
     if (!alerta) {
       throw new NotFoundException(`Alerta com id ${id} não encontrado.`);
     }
 
-    return this.prisma.alerta.update({
-      where: { id },
-      data: { visualizado: true },
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.alerta.update({
+        where: { id },
+        data: { visualizado: true },
+      });
+      await this.audit.record(
+        {
+          usuarioId: actor?.id,
+          acao: 'MARCAR_VISUALIZADO',
+          recurso: 'ALERTA',
+          recursoId: id,
+          ipOrigem,
+        },
+        tx,
+      );
+      return updated;
     });
   }
 
   /**
    * Requisito 9.4: Marcar alerta como resolvido.
    */
-  async resolve(id: number) {
-    const alerta = await this.prisma.alerta.findUnique({ where: { id } });
+  async resolve(id: number, actor?: PropertyActor, ipOrigem?: string) {
+    const propertyIds = actor
+      ? await authorizedPropertyIds(this.prisma, actor)
+      : [];
+    const alerta = await this.prisma.alerta.findFirst({
+      where: {
+        id,
+        ...(propertyIds === null
+          ? {}
+          : {
+              medicao: {
+                sensor: {
+                  dispositivo: {
+                    talhao: { propriedade_id: { in: propertyIds } },
+                  },
+                },
+              },
+            }),
+      },
+    });
     if (!alerta) {
       throw new NotFoundException(`Alerta com id ${id} não encontrado.`);
     }
 
-    return this.prisma.alerta.update({
-      where: { id },
-      data: {
-        status: 'resolvido',
-        visualizado: true,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.alerta.update({
+        where: { id },
+        data: {
+          status: 'resolvido',
+          visualizado: true,
+        },
+      });
+      await this.audit.record(
+        {
+          usuarioId: actor?.id,
+          acao: 'RESOLVER',
+          recurso: 'ALERTA',
+          recursoId: id,
+          ipOrigem,
+        },
+        tx,
+      );
+      return updated;
     });
   }
 }

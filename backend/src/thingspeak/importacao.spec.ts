@@ -10,6 +10,7 @@ describe('Importação ThingSpeak', () => {
   };
   let db: any;
   let alerts: any;
+  let audit: any;
   let service: ThingspeakService;
   beforeEach(() => {
     db = {
@@ -25,10 +26,12 @@ describe('Importação ThingSpeak', () => {
       callback(db),
     );
     alerts = { checkAndCreateAlerts: vi.fn().mockResolvedValue([]) };
+    audit = { record: vi.fn().mockResolvedValue(undefined) };
     service = new ThingspeakService(
       db,
       new ConfigService({ THINGSPEAK_SENSOR_ID: '1' }),
       alerts,
+      audit,
     );
     vi.spyOn(service, 'buscarDados').mockResolvedValue({
       feeds: [
@@ -49,7 +52,7 @@ describe('Importação ThingSpeak', () => {
         data_hora: new Date('2026-01-01T00:00:00Z'),
       },
     });
-    expect(alerts.checkAndCreateAlerts).toHaveBeenCalledWith(9, 1);
+    expect(alerts.checkAndCreateAlerts).toHaveBeenCalledWith(9, 1, undefined);
   });
   it('repetição não grava nem duplica alertas', async () => {
     db.medicao.findFirst.mockResolvedValue({ id: 9 });
@@ -94,6 +97,7 @@ describe('Importação ThingSpeak', () => {
       db,
       new ConfigService({ THINGSPEAK_SENSOR_ID: '' }),
       alerts,
+      audit,
     );
     await expect(service.salvarUltimaMedicao()).rejects.toThrow(
       'THINGSPEAK_SENSOR_ID',

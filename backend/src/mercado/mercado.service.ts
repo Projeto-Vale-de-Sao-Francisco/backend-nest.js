@@ -22,6 +22,9 @@ import type {
 import { ErroFonte, mensagemFonte } from './fontes/http-seguro.service.js';
 import { MercadoFontesService } from './fontes/mercado-fontes.service.js';
 import { PtaxService } from './fontes/ptax.service.js';
+import { AuditService } from '../audit/audit.service.js';
+
+class AuditWriteError extends Error {}
 const selectValor = {
   id: true,
   cultura_id: true,
@@ -43,8 +46,13 @@ export class MercadoService {
     private readonly prisma: PrismaService,
     private readonly fontes: MercadoFontesService,
     private readonly ptax: PtaxService,
+    private readonly audit: AuditService,
   ) {}
-  async create(dto: CreateValorMercadoDto) {
+  async create(
+    dto: CreateValorMercadoDto,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     await this.cultura(dto.cultura_id);
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -69,9 +77,21 @@ export class MercadoService {
           throw new ConflictException(
             'Já existe um valor de mercado com esta referência',
           );
-        return this.serializar(
-          await tx.valor_Mercado.create({ data, select: selectValor }),
+        const created = await tx.valor_Mercado.create({
+          data,
+          select: selectValor,
+        });
+        await this.audit.record(
+          {
+            usuarioId,
+            acao: 'CRIAR',
+            recurso: 'VALOR_MERCADO',
+            recursoId: created.id,
+            ipOrigem,
+          },
+          tx,
         );
+        return this.serializar(created);
       });
     } catch (error) {
       this.prismaError(error);
@@ -133,7 +153,12 @@ export class MercadoService {
     if (!valor) throw new NotFoundException('Valor de mercado não encontrado');
     return this.serializar(valor);
   }
-  async update(id: number, dto: UpdateValorMercadoDto) {
+  async update(
+    id: number,
+    dto: UpdateValorMercadoDto,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     if (!Object.values(dto).some((value) => value !== undefined))
       throw new BadRequestException('Informe ao menos um campo para edição');
     try {
@@ -170,8 +195,7 @@ export class MercadoService {
           throw new ConflictException(
             'Já existe um valor de mercado com esta referência',
           );
-        return this.serializar(
-          await tx.valor_Mercado.update({
+        const updated = await tx.valor_Mercado.update({
             where: { id },
             select: selectValor,
             data: {
@@ -200,8 +224,18 @@ export class MercadoService {
                 ? { demanda_estimada: dto.demanda_estimada }
                 : {}),
             },
-          }),
+          });
+        await this.audit.record(
+          {
+            usuarioId,
+            acao: 'ATUALIZAR',
+            recurso: 'VALOR_MERCADO',
+            recursoId: id,
+            ipOrigem,
+          },
+          tx,
         );
+        return this.serializar(updated);
       });
     } catch (error) {
       if (
@@ -309,7 +343,11 @@ export class MercadoService {
       })),
     };
   }
-  async atualizar(dto: AtualizarMercadoDto) {
+  async atualizar(
+    dto: AtualizarMercadoDto,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     const cultura = await this.cultura(dto.cultura_id);
     const fontes = this.fontes.selecionar(cultura, dto.fonte);
     if (!fontes.length) {
@@ -338,7 +376,8 @@ export class MercadoService {
           fonte,
           cultura,
           dto.forcar,
-          (registros) => this.gravar(cultura.id, registros),
+          (registros) =>
+            this.gravar(cultura.id, registros, usuarioId, ipOrigem),
         );
         resultados.push({
           id: fonte.id,
@@ -348,6 +387,11 @@ export class MercadoService {
         });
         houveSucesso = true;
       } catch (error) {
+        if (error instanceof AuditWriteError) {
+          throw new ServiceUnavailableException(
+            'Não foi possível registrar a auditoria da atualização de mercado.',
+          );
+        }
         const mensagem = mensagemFonte(error);
         this.logger.warn(
           `Fonte ${fonte.id}, cultura ${cultura.id}: ${mensagem}`,
@@ -426,6 +470,8 @@ export class MercadoService {
   private async gravar(
     culturaId: number,
     registros: RegistroMercado[],
+    usuarioId?: number,
+    ipOrigem?: string,
   ): Promise<number> {
     // Valida o lote inteiro antes da transação, inclusive para futuras fontes.
     if (
@@ -473,6 +519,22 @@ export class MercadoService {
               data,
             });
           else await tx.valor_Mercado.create({ data: { ...where, ...data } });
+        }
+        if (registros.length > 0) {
+          try {
+            await this.audit.record(
+              {
+                usuarioId,
+                acao: 'ATUALIZAR_FONTE',
+                recurso: 'VALOR_MERCADO',
+                recursoId: culturaId,
+                ipOrigem,
+              },
+              tx,
+            );
+          } catch {
+            throw new AuditWriteError();
+          }
         }
         return registros.length;
       },

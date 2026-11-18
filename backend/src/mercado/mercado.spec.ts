@@ -23,6 +23,8 @@ import { MercadoFontesService } from './fontes/mercado-fontes.service.js';
 import type { PtaxService } from './fontes/ptax.service.js';
 import { MercadoController } from './mercado.controller.js';
 import { MercadoService } from './mercado.service.js';
+import { AuditService } from '../audit/audit.service.js';
+import type { Request } from 'express';
 
 const cultura = { id: 1, nome: 'Manga' };
 const valor = {
@@ -75,6 +77,7 @@ let db: {
     count: ReturnType<typeof vi.fn>;
     findUnique: ReturnType<typeof vi.fn>;
   };
+  audit_Log: { create: ReturnType<typeof vi.fn> };
   $transaction: ReturnType<typeof vi.fn>;
 };
 let fonte: FonteMercado;
@@ -98,6 +101,7 @@ beforeEach(() => {
       count: vi.fn().mockResolvedValue(1),
       findUnique: vi.fn().mockResolvedValue(valor),
     },
+    audit_Log: { create: vi.fn().mockResolvedValue(undefined) },
     $transaction: vi.fn(),
   };
   db.$transaction.mockImplementation((callback: (tx: typeof db) => unknown) =>
@@ -121,6 +125,7 @@ beforeEach(() => {
     db as unknown as PrismaService,
     fontes,
     ptax as unknown as PtaxService,
+    new AuditService(db as unknown as PrismaService),
   );
 });
 afterEach(() => {
@@ -148,6 +153,15 @@ describe('Edição e resumo de mercado', () => {
     const chamada = db.valor_Mercado.update.mock.calls[0][0];
     expect(Object.keys(chamada.data)).toEqual(['preco']);
     expect(db.$transaction).toHaveBeenCalledTimes(1);
+    expect(db.audit_Log.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          acao: 'ATUALIZAR',
+          recurso: 'VALOR_MERCADO',
+          recurso_id: '1',
+        }),
+      }),
+    );
   });
 
   it('rejeita duplicidade e id inexistente sem atualizar', async () => {
@@ -255,6 +269,15 @@ describe('Cadastro e listagem', () => {
   it('cadastra em transação e serializa Decimal como string sem perder precisão', async () => {
     expect((await service.create(dto)).preco).toBe('2.1234567890123456789');
     expect(db.$transaction).toHaveBeenCalledTimes(1);
+    expect(db.audit_Log.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          acao: 'CRIAR',
+          recurso: 'VALOR_MERCADO',
+          recurso_id: '1',
+        }),
+      }),
+    );
   });
   it('cultura inexistente retorna 404 antes de gravar', async () => {
     db.cultura.findUnique.mockResolvedValue(null);
@@ -339,6 +362,15 @@ describe('Atualização e cotação', () => {
       status: 'atualizada',
       registros_gravados: 1,
     });
+    expect(db.audit_Log.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          acao: 'ATUALIZAR_FONTE',
+          recurso: 'VALOR_MERCADO',
+          recurso_id: '1',
+        }),
+      }),
+    );
     const cache = await service.atualizar({ cultura_id: 1, forcar: false });
     expect(cache.fontes[0]).toMatchObject({
       status: 'cache',
@@ -429,6 +461,7 @@ describe('Atualização e cotação', () => {
       controller.atualizar(
         { cultura_id: 1, forcar: true },
         { ...comum, tipo: 'ADMIN' },
+        { ip: '192.0.2.1' } as Request,
       ),
     ).resolves.toHaveProperty('cultura');
   });

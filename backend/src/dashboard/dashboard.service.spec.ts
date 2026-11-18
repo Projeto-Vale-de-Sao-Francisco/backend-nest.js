@@ -50,9 +50,11 @@ const leitura = {
     },
   },
 };
+const admin = { id: 1, tipo: 'ADMIN' as const };
 
 describe('DashboardService', () => {
   let db: {
+    usuario_Propriedade: { findMany: ReturnType<typeof vi.fn> };
     medicao: {
       findFirst: ReturnType<typeof vi.fn>;
       findMany: ReturnType<typeof vi.fn>;
@@ -65,6 +67,11 @@ describe('DashboardService', () => {
 
   beforeEach(() => {
     db = {
+      usuario_Propriedade: {
+        findMany: vi.fn().mockResolvedValue([
+          { propriedade_id: 1, status: 'ativo' },
+        ]),
+      },
       medicao: {
         findFirst: vi.fn().mockResolvedValue(leitura),
         findMany: vi.fn().mockResolvedValue([leitura]),
@@ -85,7 +92,7 @@ describe('DashboardService', () => {
       cultura_id: 1,
       data_inicio: '2026-10-01',
       data_fim: '2026-10-12',
-    });
+    }, admin);
     expect(resultado).toMatchObject({
       medias: { temperatura: 29.5, umidade: 61.2 },
       sensores_ativos: 2,
@@ -113,7 +120,7 @@ describe('DashboardService', () => {
       _avg: { temperatura: null, umidade: null },
     });
     db.medicao.count.mockResolvedValueOnce(0);
-    const resultado = await service.resumo({});
+    const resultado = await service.resumo({}, admin);
     expect(resultado.atual).toBeNull();
     expect(resultado.ultima_comunicacao).toBeNull();
     expect(resultado.medias).toEqual({ temperatura: null, umidade: null });
@@ -147,7 +154,7 @@ describe('DashboardService', () => {
     };
     db.medicao.findMany.mockResolvedValueOnce([semParametros]);
     db.medicao.count.mockResolvedValueOnce(3);
-    const resultado = await service.historico({ page: 2, limit: 2 });
+    const resultado = await service.historico({ page: 2, limit: 2 }, admin);
     expect(resultado.meta).toEqual({
       page: 2,
       limit: 2,
@@ -172,7 +179,7 @@ describe('DashboardService', () => {
       service.resumo({
         data_inicio: '2026-10-13',
         data_fim: '2026-10-12',
-      }),
+      }, admin),
     ).rejects.toBeInstanceOf(BadRequestException);
     const pipe = new ValidationPipe({ transform: true });
     await expect(
@@ -181,5 +188,21 @@ describe('DashboardService', () => {
         { type: 'query', metatype: HistoricoFiltrosDto },
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('limita o dashboard às propriedades ativas vinculadas ao usuário', async () => {
+    await service.resumo({}, { id: 21, tipo: 'COMUM' });
+
+    expect(db.medicao.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          sensor: {
+            dispositivo: {
+              talhao: { propriedade_id: { in: [1] } },
+            },
+          },
+        },
+      }),
+    );
   });
 });

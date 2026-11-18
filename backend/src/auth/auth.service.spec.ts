@@ -1,18 +1,36 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from './auth.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { LoginRateLimitService } from './login-rate-limit.service.js';
 
 describe('AuthService', () => {
   let service: AuthService;
   const prismaMock = { usuario: { findUnique: vi.fn(), update: vi.fn() } };
   const jwtMock = { signAsync: vi.fn() };
+  const rateLimitMock = {
+    assertNotBlocked: vi.fn().mockResolvedValue(undefined),
+    recordFailure: vi.fn().mockResolvedValue(undefined),
+    clearAccountKey: vi.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new AuthService(prismaMock as unknown as PrismaService, jwtMock as unknown as JwtService);
+    delete process.env.LOGIN_RATE_MAX_ATTEMPTS;
+    service = new AuthService(
+      prismaMock as unknown as PrismaService,
+      jwtMock as unknown as JwtService,
+      rateLimitMock as unknown as LoginRateLimitService,
+    );
+    rateLimitMock.assertNotBlocked.mockResolvedValue(undefined);
+    rateLimitMock.recordFailure.mockResolvedValue(undefined);
+    rateLimitMock.clearAccountKey.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    delete process.env.LOGIN_RATE_MAX_ATTEMPTS;
   });
 
   it('autentica usuário ativo e assina payload sem senha', async () => {
@@ -37,5 +55,20 @@ describe('AuthService', () => {
     await expect(service.login({ email: 'ana@example.com', senha: 'Senha123' })).rejects.toThrow(UnauthorizedException);
     await service.logout(7);
     expect(prismaMock.usuario.update).toHaveBeenCalledWith({ where: { id: 7 }, data: { tokenVersion: { increment: 1 } } });
+  });
+
+  it('registra falhas sem revelar se a conta existe', async () => {
+    prismaMock.usuario.findUnique.mockResolvedValue(null);
+
+    await expect(
+      service.login({ email: 'ausente@example.com', senha: 'senha' }, '192.0.2.1'),
+    ).rejects.toThrow(UnauthorizedException);
+
+    expect(rateLimitMock.assertNotBlocked).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.stringMatching(/^ip:/), expect.stringMatching(/^email:/)]),
+    );
+    expect(rateLimitMock.recordFailure).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.stringMatching(/^ip:/), expect.stringMatching(/^email:/)]),
+    );
   });
 });

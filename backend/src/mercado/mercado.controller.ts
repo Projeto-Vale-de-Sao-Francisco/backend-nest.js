@@ -9,8 +9,10 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import type { AuthenticatedUser } from '../auth/auth.service.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -33,21 +35,28 @@ export class MercadoController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles(TipoUsuario.ADMIN)
-  create(@Body() dto: CreateValorMercadoDto) {
-    return this.mercado.create(dto);
+  create(
+    @Body() dto: CreateValorMercadoDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
+  ) {
+    return this.mercado.create(dto, usuario.id, request.ip);
   }
 
   @Post('atualizar')
   @HttpCode(200)
+  @UseGuards(RolesGuard)
+  @Roles(TipoUsuario.ADMIN)
   async atualizar(
     @Body() dto: AtualizarMercadoDto,
     @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
   ) {
     if (dto.forcar && usuario.tipo !== TipoUsuario.ADMIN)
       throw new ForbiddenException(
         'Somente administradores podem forçar atualização',
       );
-    return this.mercado.atualizar(dto);
+    return this.mercado.atualizar(dto, usuario.id, request.ip);
   }
 
   @Get('cotacao')
@@ -76,8 +85,10 @@ export class MercadoController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateValorMercadoDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
   ) {
-    return this.mercado.update(id, dto);
+    return this.mercado.update(id, dto, usuario.id, request.ip);
   }
 
   @Get(':id')

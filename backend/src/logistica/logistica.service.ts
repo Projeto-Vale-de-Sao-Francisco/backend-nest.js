@@ -6,6 +6,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
+import {
+  authorizedPropertyIds,
+  type PropertyActor,
+} from '../common/property-access.js';
+import { AuditService } from '../audit/audit.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateLogisticaDto } from './dto/create-logistica.dto.js';
 import { UpdateLogisticaDto } from './dto/update-logistica.dto.js';
@@ -38,9 +43,16 @@ const includeOperacao = {
 
 @Injectable()
 export class LogisticaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
-  async create(dto: CreateLogisticaDto) {
+  async create(
+    dto: CreateLogisticaDto,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     try {
       return await this.prisma.$transaction(async (tx) => {
         await this.validarVinculo(
@@ -49,7 +61,7 @@ export class LogisticaService {
           dto.colheita_id,
           dto.data_prevista,
         );
-        return tx.operacao_Logistica.create({
+        const operacao = await tx.operacao_Logistica.create({
           data: {
             ...this.dados(dto),
             empresa_id: dto.empresa_id,
@@ -61,13 +73,29 @@ export class LogisticaService {
           },
           include: includeOperacao,
         });
+        await this.audit.record(
+          {
+            usuarioId,
+            acao: 'CRIAR',
+            recurso: 'OPERACAO_LOGISTICA',
+            recursoId: operacao.id,
+            ipOrigem,
+          },
+          tx,
+        );
+        return operacao;
       });
     } catch (error) {
       this.tratarErro(error);
     }
   }
 
-  async update(id: number, dto: UpdateLogisticaDto) {
+  async update(
+    id: number,
+    dto: UpdateLogisticaDto,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     if (!Object.values(dto).some((value) => value !== undefined))
       throw new BadRequestException('Informe ao menos um campo para edição');
     try {
@@ -83,19 +111,30 @@ export class LogisticaService {
             ? dto.data_prevista
             : atual.data_prevista?.toISOString(),
         );
-        return tx.operacao_Logistica.update({
+        const operacao = await tx.operacao_Logistica.update({
           where: { id },
           data: this.dados(dto),
           include: includeOperacao,
         });
+        await this.audit.record(
+          {
+            usuarioId,
+            acao: 'ATUALIZAR',
+            recurso: 'OPERACAO_LOGISTICA',
+            recursoId: id,
+            ipOrigem,
+          },
+          tx,
+        );
+        return operacao;
       });
     } catch (error) {
       this.tratarErro(error);
     }
   }
 
-  async findAll(dto: ListLogisticaDto) {
-    const where = this.filtros(dto);
+  async findAll(dto: ListLogisticaDto, actor?: PropertyActor) {
+    const where = await this.scopedFiltros(dto, actor);
     const [data, total] = await Promise.all([
       this.prisma.operacao_Logistica.findMany({
         where,
@@ -117,9 +156,23 @@ export class LogisticaService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, actor?: PropertyActor) {
+    const propertyIds = actor
+      ? await authorizedPropertyIds(this.prisma, actor)
+      : null;
     const operacao = await this.prisma.operacao_Logistica.findUnique({
-      where: { id },
+      where: {
+        id,
+        ...(propertyIds === null
+          ? {}
+          : {
+              colheita: {
+                talhao_cultura: {
+                  talhao: { propriedade_id: { in: propertyIds } },
+                },
+              },
+            }),
+      },
       include: includeOperacao,
     });
     if (!operacao)
@@ -127,8 +180,8 @@ export class LogisticaService {
     return operacao;
   }
 
-  async resumo(dto: ResumoLogisticaDto) {
-    const where = this.filtros(dto);
+  async resumo(dto: ResumoLogisticaDto, actor?: PropertyActor) {
+    const where = await this.scopedFiltros(dto, actor);
     const [totais, grupos] = await Promise.all([
       this.prisma.operacao_Logistica.aggregate({
         where,
@@ -209,6 +262,28 @@ export class LogisticaService {
       ...(dto.custo_estimado !== undefined
         ? { custo_estimado: dto.custo_estimado }
         : {}),
+    };
+  }
+
+  private async scopedFiltros(
+    dto: ListLogisticaDto | ResumoLogisticaDto,
+    actor?: PropertyActor,
+  ): Promise<Prisma.Operacao_LogisticaWhereInput> {
+    const where = this.filtros(dto);
+    if (!actor) {
+      return where;
+    }
+    const propertyIds = await authorizedPropertyIds(this.prisma, actor);
+    if (propertyIds === null) {
+      return where;
+    }
+    return {
+      ...where,
+      colheita: {
+        talhao_cultura: {
+          talhao: { propriedade_id: { in: propertyIds } },
+        },
+      },
     };
   }
 

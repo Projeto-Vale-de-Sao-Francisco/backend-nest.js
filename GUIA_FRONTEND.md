@@ -4,6 +4,12 @@ Base local: `http://localhost:3000` (ou a porta definida em `PORT`). As rotas n�
 
 Envie corpos JSON com `Content-Type: application/json`. Corpos com campos desconhecidos ou tipos incorretos são rejeitados com HTTP 400. IDs e valores de medições devem ser números; datas devem usar ISO 8601, por exemplo `2026-10-12T12:00:00.000Z`.
 
+O login web (`POST /auth/login`) define a sessão em cookie `HttpOnly`,
+`SameSite=Strict` e `Secure` em produção; a resposta não contém o JWT. Use o
+proxy `/api` do Vite/Vercel e chamadas com `credentials: include`. Mutations
+autenticadas por cookie exigem `Origin` permitido. Clientes não-browser podem
+continuar enviando JWT em `Authorization: Bearer`, sem armazená-lo no frontend.
+
 ## Rotas
 
 | Método | Rota | Uso / retorno |
@@ -54,7 +60,7 @@ Opcionais: `propriedadeId` (deve corresponder à propriedade do talhão), `statu
 
 ### Enviar leitura — POST /readings
 
-Envie o header `x-api-key: <DEVICE_API_KEY>` ou `x-device-token: <DEVICE_API_KEY>`. A chave é configurada no backend; mantenha-a no servidor/integrador IoT, fora do bundle público do frontend.
+Envie `x-device-token: <TOKEN_DO_DISPOSITIVO>`. Um operador provisiona/rotaciona a credencial fora da API com `npm run device:credential -- --device-id=<id> --admin-id=<id> --ip-origem=<ip>` no backend; o token aparece uma única vez no terminal. Guarde-o no integrador IoT, nunca no frontend público. A API não emite nem retorna credenciais. Para uma transição temporária, a chave legada `x-api-key` exige configuração no backend e fica vinculada a um único dispositivo.
 
 ```json
 {
@@ -68,7 +74,7 @@ Envie o header `x-api-key: <DEVICE_API_KEY>` ou `x-device-token: <DEVICE_API_KEY
 }
 ```
 
-- Obrigatórios: `temperatura` (-50 a 65 °C), `umidade` (0 a 100%) e `sensorId` **ou** `codigoDispositivo`. Se ambos forem enviados, sensorId tem prioridade.
+- Obrigatórios: `temperatura` (-50 a 65 °C), `umidade` (0 a 100%) e `sensorId` **ou** `codigoDispositivo`. Esses identificadores selecionam um sensor do dispositivo autenticado; não definem a identidade do dispositivo. Se enviados, devem corresponder ao token.
 - Opcionais: `umidadeSolo` (0 a 100%), `luminosidade` (>= 0 lux), `precipitacao` (>= 0 mm) e `dataHora` (padrão: agora).
 - `pressao` é opcional, em hPa (>= 0), e é armazenada e retornada como `pressao`.
 - O sensor e seu dispositivo precisam estar ativos; a ingestão não cria sensores substitutos.

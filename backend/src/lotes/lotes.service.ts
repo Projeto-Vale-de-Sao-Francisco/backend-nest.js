@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateLoteDto } from './dto/create-lote.dto.js';
 import { ListLotesDto } from './dto/list-lotes.dto.js';
 import { UpdateLoteDto } from './dto/update-lote.dto.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const loteInclude = {
   propriedade: true,
@@ -26,9 +27,12 @@ type Tx = Prisma.TransactionClient;
 
 @Injectable()
 export class LotesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
-  create(dto: CreateLoteDto) {
+  create(dto: CreateLoteDto, usuarioId?: number, ipOrigem?: string) {
     this.validarDatas(dto.data_plantio, dto.previsao_colheita);
     return this.prisma.$transaction(async (tx) => {
       await this.validarReferencias(tx, dto.propriedade_id, dto.cultura_id);
@@ -43,6 +47,16 @@ export class LotesService {
           status: dto.situacao,
         },
       });
+      await this.audit.record(
+        {
+          usuarioId,
+          acao: 'CRIAR',
+          recurso: 'TALHAO',
+          recursoId: lote.id,
+          ipOrigem,
+        },
+        tx,
+      );
       const plantio = await tx.talhao_Cultura.create({
         data: {
           talhao_id: lote.id,
@@ -85,7 +99,12 @@ export class LotesService {
     return lote;
   }
 
-  update(id: number, dto: UpdateLoteDto) {
+  update(
+    id: number,
+    dto: UpdateLoteDto,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const lote = await tx.talhao.findUnique({
         where: { id },
@@ -155,6 +174,16 @@ export class LotesService {
             },
           });
       }
+      await this.audit.record(
+        {
+          usuarioId,
+          acao: 'ATUALIZAR',
+          recurso: 'TALHAO',
+          recursoId: id,
+          ipOrigem,
+        },
+        tx,
+      );
       return tx.talhao.findUnique({ where: { id }, include: loteInclude });
     });
   }

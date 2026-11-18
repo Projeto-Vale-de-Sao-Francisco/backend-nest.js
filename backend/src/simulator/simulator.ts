@@ -18,12 +18,14 @@ interface ReadingPayload {
 }
 
 const API_URL = process.env.API_URL || 'http://localhost:3000';
-const API_KEY = process.env.DEVICE_API_KEY || 'iot-simulator-secret-2026';
+const LEGACY_API_KEY = process.env.DEVICE_API_KEY;
+const LEGACY_AUTH_ENABLED =
+  process.env.DEVICE_API_KEY_LEGACY_ENABLED === 'true';
+const LEGACY_DEVICE_CODE = process.env.SIMULATOR_LEGACY_DEVICE_CODE;
 
 // Configurações do ThingSpeak
-const THINGSPEAK_CHANNEL_ID = process.env.THINGSPEAK_CHANNEL_ID || '3502672';
-const THINGSPEAK_WRITE_API_KEY =
-  process.env.THINGSPEAK_WRITE_API_KEY || 'GZS2ZFL9QXV1TNLD';
+const THINGSPEAK_CHANNEL_ID = process.env.THINGSPEAK_CHANNEL_ID;
+const THINGSPEAK_WRITE_API_KEY = process.env.THINGSPEAK_WRITE_API_KEY;
 const THINGSPEAK_DEVICE = process.env.THINGSPEAK_DEVICE || 'ESP32-TALHAO-01';
 
 // O plano gratuito do ThingSpeak exige no mínimo 15s entre atualizações
@@ -40,6 +42,27 @@ const ONLY_THINGSPEAK =
   process.env.SIMULATOR_LOCAL_API === 'false';
 
 let lastThingSpeakTimestamp = 0;
+
+function deviceCredential(code: string) {
+  const envName = `DEVICE_TOKEN_${code
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .toUpperCase()}`;
+  const token = process.env[envName]?.trim();
+  if (token && token.length >= 32) {
+    return { header: 'x-device-token', token };
+  }
+
+  if (
+    LEGACY_AUTH_ENABLED &&
+    LEGACY_DEVICE_CODE === code &&
+    LEGACY_API_KEY &&
+    LEGACY_API_KEY.length >= 32
+  ) {
+    return { header: 'x-api-key', token: LEGACY_API_KEY };
+  }
+
+  throw new Error(`Configure ${envName} com o token emitido para o dispositivo.`);
+}
 
 /**
  * Gera flutuações plausíveis e ocasionalmente induz um valor fora da faixa
@@ -79,10 +102,11 @@ async function enviarLeitura(payload: ReadingPayload) {
   }
 
   try {
+    const credential = deviceCredential(payload.codigoDispositivo);
     const response = await axios.post(`${API_URL}/readings`, payload, {
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY, // Requisito 6.6
+        [credential.header]: credential.token,
       },
       timeout: 5000,
     });
@@ -126,7 +150,7 @@ async function enviarLeitura(payload: ReadingPayload) {
  * Respeita a taxa limite do ThingSpeak (mínimo de 15 segundos entre requisições).
  */
 async function enviarParaThingSpeak(payload: ReadingPayload) {
-  if (!THINGSPEAK_WRITE_API_KEY) {
+  if (!THINGSPEAK_CHANNEL_ID || !THINGSPEAK_WRITE_API_KEY) {
     return;
   }
 
@@ -201,6 +225,11 @@ async function cicloSimulacao() {
 
 async function main() {
   const isOnce = process.argv.includes('--once');
+  if (!ONLY_THINGSPEAK) {
+    for (const device of DISPOSITIVOS_SIMULADOS) {
+      deviceCredential(device.codigo);
+    }
+  }
 
   console.log('====================================================');
   console.log('  SIMULADOR DE SENSORES IoT INICIADO (Requisito 6.4) ');

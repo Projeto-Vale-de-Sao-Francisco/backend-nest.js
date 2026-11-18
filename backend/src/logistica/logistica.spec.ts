@@ -14,6 +14,7 @@ import { LogisticaService } from './logistica.service.js';
 import { CreateLogisticaDto } from './dto/create-logistica.dto.js';
 import { UpdateLogisticaDto } from './dto/update-logistica.dto.js';
 import { ListLogisticaDto } from './dto/list-logistica.dto.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const dto = {
   empresa_id: 1,
@@ -28,6 +29,11 @@ const dto = {
 } satisfies CreateLogisticaDto;
 function mockDb() {
   return {
+    usuario_Propriedade: {
+      findMany: vi.fn().mockResolvedValue([
+        { propriedade_id: 10, status: 'ativo' },
+      ]),
+    },
     empresa: { findUnique: vi.fn().mockResolvedValue({ id: 1 }) },
     colheita: {
       findUnique: vi.fn().mockResolvedValue({
@@ -55,6 +61,7 @@ function mockDb() {
       }),
       groupBy: vi.fn().mockResolvedValue([]),
     },
+    audit_Log: { create: vi.fn().mockResolvedValue(undefined) },
     $transaction: vi.fn(),
   };
 }
@@ -65,7 +72,10 @@ beforeEach(() => {
   db.$transaction.mockImplementation((callback: (tx: typeof db) => unknown) =>
     callback(db),
   );
-  service = new LogisticaService(db as unknown as PrismaService);
+  service = new LogisticaService(
+    db as unknown as PrismaService,
+    new AuditService(db as unknown as PrismaService),
+  );
 });
 
 describe('Logística', () => {
@@ -77,6 +87,14 @@ describe('Logística', () => {
       colheita_id: 2,
       data_prevista: new Date('2026-11-01'),
     });
+    expect(db.audit_Log.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          acao: 'CRIAR',
+          recurso: 'OPERACAO_LOGISTICA',
+        }),
+      }),
+    );
   });
   it('rejeita colheita de outra empresa no POST e PATCH', async () => {
     await expect(
@@ -213,6 +231,23 @@ describe('Contratos e guards E7', () => {
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+  it('usuário comum recebe somente operações das propriedades vinculadas', async () => {
+    await service.findAll(
+      { page: 1, limit: 25 } as ListLogisticaDto,
+      { id: 21, tipo: 'COMUM' },
+    );
+    expect(db.operacao_Logistica.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          colheita: {
+            talhao_cultura: {
+              talhao: { propriedade_id: { in: [10] } },
+            },
+          },
+        }),
+      }),
+    );
+  });
   it('JWT nas consultas, ADMIN nas escritas e resumo antes de id', () => {
     expect(Reflect.getMetadata(GUARDS_METADATA, LogisticaController)).toContain(
       JwtAuthGuard,
@@ -221,6 +256,7 @@ describe('Contratos e guards E7', () => {
       [LogisticaController, 'create'],
       [LogisticaController, 'update'],
       [MercadoController, 'update'],
+      [MercadoController, 'atualizar'],
     ] as const)
       expect(
         Reflect.getMetadata(

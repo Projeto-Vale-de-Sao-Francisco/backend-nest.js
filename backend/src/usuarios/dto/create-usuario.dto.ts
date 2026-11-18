@@ -5,10 +5,12 @@ import {
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   MinLength,
 } from 'class-validator';
 import { TipoUsuario } from '../../generated/prisma/client.js';
 import { IsCpf } from '../../common/validators/is-cpf.validator.js';
+import { MaxUtf8Bytes } from '../../common/validators/max-utf8-bytes.validator.js';
 
 const apenasDigitos = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.replace(/\D/g, '') : value;
@@ -36,6 +38,8 @@ export class CreateUsuarioDto {
 
   @IsString({ message: 'Senha deve ser um texto' })
   @MinLength(8, { message: 'Senha deve ter pelo menos 8 caracteres' })
+  @MaxLength(72, { message: 'Senha deve ter no máximo 72 caracteres' })
+  @MaxUtf8Bytes(72)
   @Matches(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
     message: 'Senha deve conter ao menos uma letra e um número',
   })

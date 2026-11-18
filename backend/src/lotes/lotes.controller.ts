@@ -7,8 +7,12 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
+import type { AuthenticatedUser } from '../auth/auth.service.js';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -25,8 +29,12 @@ export class LotesController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  create(@Body() dto: CreateLoteDto) {
-    return this.lotes.create(dto);
+  create(
+    @Body() dto: CreateLoteDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
+  ) {
+    return this.lotes.create(dto, usuario.id, request.ip);
   }
 
   @Get()
@@ -42,7 +50,12 @@ export class LotesController {
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateLoteDto) {
-    return this.lotes.update(id, dto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateLoteDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
+  ) {
+    return this.lotes.update(id, dto, usuario.id, request.ip);
   }
 }

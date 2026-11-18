@@ -11,20 +11,31 @@ Para a documentação completa de arquitetura, regras de negócio e guia dos pr�
 
 1. **Configurar variáveis de ambiente (`.env`):**
    ```env
-   DATABASE_URL="postgresql://postgres:1234@localhost:5432/postgres?schema=public"
-   DEVICE_API_KEY="iot-simulator-secret-2026"
-   JWT_SECRET="gere-uma-chave-longa-e-aleatoria"
+   DATABASE_URL="postgresql://usuario:senha@localhost:5432/valevivo"
+   DEVICE_API_KEY=""
+   DEVICE_API_KEY_LEGACY_ENABLED=false
+   DEVICE_API_KEY_LEGACY_DEVICE_ID=""
+   DEVICE_TOKEN_ESP32_TALHAO_01=""
+   DEVICE_TOKEN_SEN_TH_02=""
+   JWT_SECRET="defina-uma-chave-aleatoria-de-pelo-menos-32-caracteres"
    JWT_EXPIRES_IN="1h"
-   SEED_ADMIN_NOME="Administrador"
-   SEED_ADMIN_EMAIL="admin@example.com"
-   SEED_ADMIN_SENHA="SenhaAdmin123"
-   SEED_ADMIN_CPF="52998224725"
+   JWT_ISSUER="sivale-api"
+   JWT_AUDIENCE="sivale-frontend"
+   CORS_ORIGINS="https://seu-dominio.example"
+   TRUST_PROXY_HOPS="0"
+   LOGIN_RATE_MAX_ATTEMPTS="5"
+   LOGIN_RATE_WINDOW_MS="900000"
+   LOGIN_RATE_BLOCK_MS="900000"
+   SEED_ADMIN_NOME="Nome do administrador inicial"
+   SEED_ADMIN_EMAIL="email-administrativo"
+   SEED_ADMIN_SENHA="defina-uma-senha-forte"
+   SEED_ADMIN_CPF="CPF fornecido pelo administrador do ambiente"
    PORT=3000
    ```
 
-2. **Sincronizar banco e popular dados iniciais:**
+2. **Aplicar migrations e popular dados iniciais:**
    ```bash
-   npx prisma db push
+   npx prisma migrate deploy
    npx prisma db seed
    ```
 
@@ -76,6 +87,107 @@ Após aplicar as migrations, execute:
 ```bash
 npx prisma db seed
 ```
+
+## Segurança e auditoria
+
+- Senhas novas e redefinidas são armazenadas com bcrypt fator 12, comparadas por
+  `bcrypt.compare` e limitadas a 72 bytes UTF-8 para evitar truncamento do bcrypt.
+  Senha/hash nunca é selecionado nas respostas.
+- JWT usa HS256 explicitamente, expiração configurável e validação de emissor e
+  público (`JWT_ISSUER`/`JWT_AUDIENCE`). Use `JWT_SECRET` aleatório com no mínimo
+  32 caracteres e nunca reutilize o exemplo.
+- O login web envia o JWT somente como cookie `HttpOnly`, `SameSite=Strict`,
+  `Secure` em produção e `Path=/`; o JSON contém apenas o perfil do usuário.
+  O frontend usa `credentials: include` e `/api` same-origin. Mutations com
+  cookie e o login exigem um `Origin` permitido. Bearer continua aceito para
+  clientes não-browser; não grave tokens em armazenamento acessível por JS.
+- `POST /auth/login` aplica limites configuráveis por IP e por hash do e-mail
+  no PostgreSQL compartilhado. O contador usa upsert atômico, bloqueio temporário
+  e limpeza limitada a 500 buckets inativos com mais de 24 horas por falha;
+  buckets usados pela requisição e bloqueios ainda ativos são preservados. Se
+  o banco não estiver disponível, o login falha com `503`; a proteção não é
+  silenciosamente desativada. Todas as
+  instâncias devem usar o mesmo `DATABASE_URL`.
+- CORS em produção permite somente `CORS_ORIGINS`, uma lista de origens HTTPS
+  separadas por vírgula. TLS e redirecionamento HTTP→HTTPS devem ser configurados
+  no serviço de hospedagem/proxy. `TRUST_PROXY_HOPS` deve corresponder somente à
+  cadeia fixa de proxies confiáveis; o padrão `0` não confia em cabeçalhos do cliente.
+  No Render, configure o número de saltos apenas após confirmar a cadeia publicada.
+- A API define CSP restritiva, `X-Content-Type-Options`, `Referrer-Policy`,
+  `X-Frame-Options` e HSTS em produção.
+- Em produção, `DATABASE_URL` deve usar uma role de runtime que não seja
+  proprietária de `Audit_Log` e não tenha `UPDATE`, `DELETE`, `TRUNCATE` ou
+  `TRIGGER` nessa tabela. O backend recusa iniciar se esses privilégios forem
+  detectados. Configure uma role `NOLOGIN` separada como proprietária da tabela
+  e conceda à role de runtime somente `SELECT` e `INSERT` (incluindo `USAGE`/
+  `SELECT` na sequence). Use `MIGRATIONS_DATABASE_URL` apenas no deploy para
+  aplicar migrations com uma role privilegiada; não a disponibilize ao processo
+  da API. Mesmo assim, superusuários do PostgreSQL podem alterar o schema e não
+  podem ser impedidos pela aplicação.
+- `POST /readings` autentica cada dispositivo por `x-device-token`. O token é
+  aleatório e armazenado apenas como SHA-256. Ele nunca é retornado pela API.
+  `DELETE /devices/:id/credential` (ADMIN) revoga o token.
+- Para provisionar ou rotacionar, execute no backend
+  `npm run device:credential -- --device-id=<id> --admin-id=<id> --ip-origem=<ip>`
+  após configurar a conexão com o banco. O comando valida um administrador
+  ativo e um IP válido, substitui a credencial anterior e exibe o token uma
+  única vez no terminal. Guarde-o no gerenciador de segredos do integrador; não
+  o registre em logs ou no frontend.
+- A migration `20261116180000_device_credentials_login_rate_limit` cria as
+  tabelas de credenciais e rate limit sem alterar ou apagar dispositivos. Após
+  aplicá-la, um ADMIN deve emitir um token para cada dispositivo existente e
+  guardá-lo no segredo do integrador. O simulador usa
+  `DEVICE_TOKEN_<CODIGO_NORMALIZADO>` (caracteres não alfanuméricos viram `_`).
+  Credenciais não são criadas automaticamente pela migration.
+- Para transição temporária, a antiga `DEVICE_API_KEY` só é aceita se
+  `DEVICE_API_KEY_LEGACY_ENABLED=true` e `DEVICE_API_KEY_LEGACY_DEVICE_ID`
+  apontar para um único dispositivo ativo. O corpo ainda precisa identificar
+  esse mesmo dispositivo/sensor. Configure `SIMULATOR_LEGACY_DEVICE_CODE` para
+  esse único código no simulador. Depois de migrar todos os integradores,
+  desligue o modo legado e remova o segredo global do ambiente.
+- Nos dois modos, o servidor deriva a identidade do dispositivo do header;
+  `sensorId` e `codigoDispositivo` no corpo apenas selecionam/confirmam recursos
+  do dispositivo autenticado e não podem mudar essa identidade. As rotas de
+  consulta continuam exigindo JWT.
+- A integração ThingSpeak exige `THINGSPEAK_CHANNEL_ID`,
+  `THINGSPEAK_WRITE_API_KEY` e `THINGSPEAK_READ_API_KEY`. Não existem
+  credenciais demonstrativas embutidas no código. Os endpoints administrativos
+  de envio/consulta/importação exigem papel `ADMIN`.
+- Usuários `COMUM` consultam dispositivos, leituras, alertas e dashboard somente
+  das propriedades com vínculo `Usuario_Propriedade` ativo. Filtros recebidos
+  do cliente não ampliam esse escopo; ausência de vínculo resulta em listas
+  vazias/recursos não encontrados. Usuários `ADMIN` mantêm acesso global.
+  Vínculos não são criados automaticamente.
+- Na publicação, Render termina TLS; mantenha HTTPS habilitado e configure
+  `CORS_ORIGINS` com o domínio HTTPS do frontend. O frontend Vercel envia HSTS e
+  CSP; a API envia seus próprios headers e HSTS apenas em produção. Em localhost,
+  HSTS não é emitido.
+- `GET /audit-logs` exige papel `ADMIN`, aceita `usuarioId`, `acao`, `recurso`,
+  `recursoId`, `dataInicio`, `dataFim`, `page` e `limit` (máximo 100). A migração
+  `20261111210000_audit_indexes` adiciona índices sem remover dados.
+- Usuários e alterações de status de usuários/dispositivos são registrados na
+  mesma transação da operação, assim como alterações em culturas/talhões,
+  alertas, logística, mercado, pipeline e importações de leituras. Operações de
+  envio ao ThingSpeak também registram a tentativa antes da chamada externa.
+  Os logs não guardam dados de perfil, CPF, senha ou token.
+- Aplicar a migração: `npx prisma migrate deploy`. Validar backend: `npm test`,
+  `npm run lint` e `npm run build`.
+- Revisão de dependências (11/11/2026): as versões transitivas vulneráveis de
+  `body-parser`, `deepmerge-ts`, `fast-uri`, `follow-redirects`, `multer`, `mysql2`,
+  `qs`, `source-map-js`, `tmp` e `undici` foram corrigidas pela atualização
+  compatível do lockfile e remoção de `@nestjs/mau`, que não era usado. Vitest e
+  `@vitest/coverage-v8` foram atualizados para 5.1.0. A auditoria final do backend
+  reportou zero vulnerabilidades.
+- A varredura do histórico encontrou valores demonstrativos antigos para a senha
+  do administrador inicial e para a chave do simulador. O histórico não foi
+  reescrito: se algum ambiente reutilizou esses exemplos, rotacione a senha do
+  administrador, `DEVICE_API_KEY` e `JWT_SECRET` e invalide as sessões existentes.
+  Os arquivos `.env` locais do frontend continham somente `VITE_API_URL` (valor
+  público); eles foram removidos do índice e permanecem no disco local, ignorados
+  pelo Git. Nenhum token privado ou chave de provedor foi confirmado pela varredura.
+- O frontend remove chaves antigas de autenticação do `localStorage`; guarda
+  somente ID, nome e perfil em `sessionStorage` para controle visual de rotas.
+  A autenticação/autorização real permanece no cookie e no backend.
 
 ## E7 — Mercado, Etapa A
 

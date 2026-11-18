@@ -1,9 +1,20 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Request } from 'express';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AuthenticatedUser, JwtPayload } from '../auth.service.js';
+import { SESSION_COOKIE_NAME } from '../session-cookie.js';
+
+function extractSessionCookie(request: Request): string | null {
+  const cookiePrefix = `${SESSION_COOKIE_NAME}=`;
+  const sessionCookie = request.headers.cookie
+    ?.split(';')
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(cookiePrefix));
+  return sessionCookie?.slice(cookiePrefix.length) || null;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -12,9 +23,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly prisma: PrismaService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        extractSessionCookie,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
+      algorithms: ['HS256'],
+      issuer: configService.get<string>('JWT_ISSUER', 'sivale-api'),
+      audience: configService.get<string>(
+        'JWT_AUDIENCE',
+        'sivale-frontend',
+      ),
     });
   }
 

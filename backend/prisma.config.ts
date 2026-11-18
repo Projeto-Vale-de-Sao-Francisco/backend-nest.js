@@ -11,6 +11,8 @@ export default defineConfig({
   },
 
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url:
+      process.env["MIGRATIONS_DATABASE_URL"] ||
+      process.env["DATABASE_URL"],
   },
 });

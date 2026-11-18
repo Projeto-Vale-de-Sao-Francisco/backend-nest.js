@@ -2,6 +2,7 @@
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { AuthModule } from '../auth/auth.module.js';
+import { AuditModule } from '../audit/audit.module.js';
 import type { FonteMercado } from './fontes/fonte-mercado.interface.js';
 import { HttpSeguroService } from './fontes/http-seguro.service.js';
 import {
@@ -27,7 +28,7 @@ const classes: Type<FonteMercado>[] = await Promise.all(
     }),
 );
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, AuditModule],
   controllers: [MercadoController],
   providers: [
     MercadoService,

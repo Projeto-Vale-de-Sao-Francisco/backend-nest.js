@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UsuariosService } from './usuarios.service.js';
+import { AuditService } from '../audit/audit.service.js';
 
 describe('UsuariosService - regras administrativas', () => {
   let service: UsuariosService;
@@ -12,9 +13,13 @@ describe('UsuariosService - regras administrativas', () => {
   beforeEach(() => {
     prismaMock = {
       usuario: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), create: vi.fn() },
+      audit_Log: { create: vi.fn().mockResolvedValue(undefined) },
       $transaction: vi.fn(async (callback: (tx: unknown) => unknown) => callback(prismaMock)),
     };
-    service = new UsuariosService(prismaMock as PrismaService);
+    service = new UsuariosService(
+      prismaMock as PrismaService,
+      new AuditService(prismaMock as unknown as PrismaService),
+    );
   });
 
   it('não permite que administrador rebaixe a si mesmo', async () => {
@@ -31,8 +36,17 @@ describe('UsuariosService - regras administrativas', () => {
   it('incrementa tokenVersion ao inativar usuário', async () => {
     prismaMock.usuario.findUnique.mockResolvedValue({ ...admin, id: 3, tipo: 'COMUM' });
     prismaMock.usuario.update.mockResolvedValue({ id: 3, status: 'INATIVO' });
-    await service.updateStatus(1, 3, 'INATIVO');
+    await service.updateStatus(1, 3, 'INATIVO', '192.0.2.1');
     expect(prismaMock.usuario.update).toHaveBeenCalledWith(expect.objectContaining({ data: { status: 'INATIVO', tokenVersion: { increment: 1 } } }));
+    expect(prismaMock.audit_Log.create).toHaveBeenCalledWith({
+      data: {
+        usuario_id: 1,
+        acao: 'ATUALIZAR_STATUS',
+        recurso: 'USUARIO',
+        recurso_id: '3',
+        ip_origem: '192.0.2.1',
+      },
+    });
   });
 
   it('incrementa tokenVersion ao trocar senha', async () => {
@@ -43,8 +57,21 @@ describe('UsuariosService - regras administrativas', () => {
   });
 
   it('mantém cadastro público como COMUM e ATIVO', async () => {
-    prismaMock.usuario.create.mockResolvedValue({ id: 3 });
-    await service.createPublic({ nome: 'Comum', cpf: '52998224725', email: 'comum@example.com', telefone: '87999999999', senha: 'Senha123', vinculo: 'Campo', tipo: 'ADMIN' });
+    prismaMock.usuario.create.mockResolvedValue({ id: 3, cpf: '52998224725' });
+    const usuario = await service.createPublic({ nome: 'Comum', cpf: '52998224725', email: 'comum@example.com', telefone: '87999999999', senha: 'Senha123', vinculo: 'Campo', tipo: 'ADMIN' });
     expect(prismaMock.usuario.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ tipo: 'COMUM', status: 'ATIVO' }) }));
+    expect(usuario).toEqual({ id: 3, cpf: '***.***.***-**' });
+    expect(usuario).not.toHaveProperty('senha');
+    const dadosCriacao = prismaMock.usuario.create.mock.calls[0][0].data;
+    expect(dadosCriacao.senha).not.toBe('Senha123');
+    expect(prismaMock.audit_Log.create).toHaveBeenCalledWith({
+      data: {
+        usuario_id: null,
+        acao: 'CRIAR',
+        recurso: 'USUARIO',
+        recurso_id: '3',
+        ip_origem: null,
+      },
+    });
   });
 });

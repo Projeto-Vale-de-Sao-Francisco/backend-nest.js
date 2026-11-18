@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { LotesService } from './lotes.service.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const propriedade = { id: 1, area_total: 10 };
 const detalhe = {
@@ -31,8 +32,9 @@ describe('LotesService', () => {
       create: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
     };
+    audit_Log: { create: ReturnType<typeof vi.fn> };
   };
-  let db: { $transaction: ReturnType<typeof vi.fn>; talhao: object };
+  let db: { $transaction: ReturnType<typeof vi.fn>; talhao: object; audit_Log: object };
   let service: LotesService;
 
   beforeEach(() => {
@@ -50,6 +52,7 @@ describe('LotesService', () => {
         update: vi.fn(),
       },
       colheita: { create: vi.fn(), update: vi.fn() },
+      audit_Log: { create: vi.fn().mockResolvedValue(undefined) },
     };
     db = {
       $transaction: vi
@@ -58,8 +61,12 @@ describe('LotesService', () => {
           callback(tx),
         ),
       talhao: {},
+      audit_Log: {},
     };
-    service = new LotesService(db as unknown as PrismaService);
+    service = new LotesService(
+      db as unknown as PrismaService,
+      new AuditService(db as unknown as PrismaService),
+    );
   });
 
   it('cadastra lote, plantio e previsão na mesma transação', async () => {

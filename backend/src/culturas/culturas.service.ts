@@ -8,16 +8,37 @@ import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateCulturaDto } from './dto/create-cultura.dto.js';
 import { UpdateCulturaDto } from './dto/update-cultura.dto.js';
+import { AuditService } from '../audit/audit.service.js';
 
 @Injectable()
 export class CulturasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
-  async create(dto: CreateCulturaDto) {
+  async create(
+    dto: CreateCulturaDto,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     this.validarFaixas(dto);
     await this.garantirNomeDisponivel(dto.nome);
-    return this.prisma.cultura.create({
-      data: { ...this.dados(dto), nome: dto.nome.trim() },
+    return this.prisma.$transaction(async (tx) => {
+      const cultura = await tx.cultura.create({
+        data: { ...this.dados(dto), nome: dto.nome.trim() },
+      });
+      await this.audit.record(
+        {
+          usuarioId,
+          acao: 'CRIAR',
+          recurso: 'CULTURA',
+          recursoId: cultura.id,
+          ipOrigem,
+        },
+        tx,
+      );
+      return cultura;
     });
   }
 
@@ -33,7 +54,12 @@ export class CulturasService {
     return cultura;
   }
 
-  async update(id: number, dto: UpdateCulturaDto) {
+  async update(
+    id: number,
+    dto: UpdateCulturaDto,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     const atual = await this.findOne(id);
     this.validarFaixas({
       temperatura_min:
@@ -51,9 +77,22 @@ export class CulturasService {
     });
     if (dto.nome !== undefined) await this.garantirNomeDisponivel(dto.nome, id);
     try {
-      return await this.prisma.cultura.update({
-        where: { id },
-        data: this.dados(dto),
+      return await this.prisma.$transaction(async (tx) => {
+        const cultura = await tx.cultura.update({
+          where: { id },
+          data: this.dados(dto),
+        });
+        await this.audit.record(
+          {
+            usuarioId,
+            acao: 'ATUALIZAR',
+            recurso: 'CULTURA',
+            recursoId: id,
+            ipOrigem,
+          },
+          tx,
+        );
+        return cultura;
       });
     } catch (error) {
       if (

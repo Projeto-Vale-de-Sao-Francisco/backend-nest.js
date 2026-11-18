@@ -6,23 +6,32 @@ import { CreateUsuarioDto } from './dto/create-usuario.dto.js';
 import { ListUsuariosDto } from './dto/list-usuarios.dto.js';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto.js';
 import * as bcrypt from 'bcrypt';
+import { AuditService } from '../audit/audit.service.js';
 
 const SALT_ROUNDS = 12;
 const userSelect = {
   id: true, nome: true, cpf: true, email: true, telefone: true, tipo: true,
   vinculo: true, status: true, createdAt: true, updatedAt: true,
 } satisfies Prisma.UsuarioSelect;
+const CPF_MASCARADO = '***.***.***-**';
 
 @Injectable()
 export class UsuariosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
-  async createPublic(dto: CreateUsuarioDto) {
-    return this.create(dto, 'COMUM', 'ATIVO');
+  async createPublic(dto: CreateUsuarioDto, ipOrigem?: string) {
+    return this.create(dto, 'COMUM', 'ATIVO', null, ipOrigem);
   }
 
-  async createByAdmin(dto: CreateAdminUsuarioDto) {
-    return this.create(dto, dto.tipo, dto.status);
+  async createByAdmin(
+    dto: CreateAdminUsuarioDto,
+    adminId: number,
+    ipOrigem?: string,
+  ) {
+    return this.create(dto, dto.tipo, dto.status, adminId, ipOrigem);
   }
 
   async findAll(filters: ListUsuariosDto) {
@@ -39,16 +48,24 @@ export class UsuariosService {
       this.prisma.usuario.count({ where }),
     ]);
 
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: data.map((usuario) => ({ ...usuario, cpf: CPF_MASCARADO })),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(id: number) {
     const usuario = await this.prisma.usuario.findUnique({ where: { id }, select: userSelect });
     if (!usuario) throw new NotFoundException('Usuário não encontrado');
-    return usuario;
+    return { ...usuario, cpf: CPF_MASCARADO };
   }
 
-  async update(adminId: number, id: number, dto: UpdateUsuarioDto) {
+  async update(
+    adminId: number,
+    id: number,
+    dto: UpdateUsuarioDto,
+    ipOrigem?: string,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const atual = await tx.usuario.findUnique({ where: { id } });
       if (!atual) throw new NotFoundException('Usuário não encontrado');
@@ -68,11 +85,26 @@ export class UsuariosService {
         },
         select: userSelect,
       });
-      return usuario;
+      await this.audit.record(
+        {
+          usuarioId: adminId,
+          acao: 'ATUALIZAR',
+          recurso: 'USUARIO',
+          recursoId: id,
+          ipOrigem,
+        },
+        tx,
+      );
+      return { ...usuario, cpf: CPF_MASCARADO };
     }).catch((error) => this.handlePrismaError(error));
   }
 
-  async updateStatus(adminId: number, id: number, status: 'ATIVO' | 'INATIVO') {
+  async updateStatus(
+    adminId: number,
+    id: number,
+    status: 'ATIVO' | 'INATIVO',
+    ipOrigem?: string,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const atual = await tx.usuario.findUnique({ where: { id } });
       if (!atual) throw new NotFoundException('Usuário não encontrado');
@@ -82,20 +114,50 @@ export class UsuariosService {
       if (atual.tipo === 'ADMIN' && atual.status === 'ATIVO' && status === 'INATIVO') {
         await this.assertOtherActiveAdmin(tx, id);
       }
-      return tx.usuario.update({
+      const usuario = await tx.usuario.update({
         where: { id },
         data: { status, ...(status === 'INATIVO' ? { tokenVersion: { increment: 1 } } : {}) },
         select: userSelect,
       });
+      await this.audit.record(
+        {
+          usuarioId: adminId,
+          acao: 'ATUALIZAR_STATUS',
+          recurso: 'USUARIO',
+          recursoId: id,
+          ipOrigem,
+        },
+        tx,
+      );
+      return { ...usuario, cpf: CPF_MASCARADO };
     });
   }
 
-  private async create(dto: CreateUsuarioDto, tipo: 'ADMIN' | 'COMUM', status: 'ATIVO' | 'INATIVO') {
+  private async create(
+    dto: CreateUsuarioDto,
+    tipo: 'ADMIN' | 'COMUM',
+    status: 'ATIVO' | 'INATIVO',
+    actorId: number | null,
+    ipOrigem?: string,
+  ) {
     const senha = await bcrypt.hash(dto.senha, SALT_ROUNDS);
     try {
-      return await this.prisma.usuario.create({
-        data: { nome: dto.nome.trim(), cpf: dto.cpf, email: dto.email.trim().toLowerCase(), telefone: dto.telefone, senha, vinculo: dto.vinculo.trim(), tipo, status },
-        select: userSelect,
+      return await this.prisma.$transaction(async (tx) => {
+        const usuario = await tx.usuario.create({
+          data: { nome: dto.nome.trim(), cpf: dto.cpf, email: dto.email.trim().toLowerCase(), telefone: dto.telefone, senha, vinculo: dto.vinculo.trim(), tipo, status },
+          select: userSelect,
+        });
+        await this.audit.record(
+          {
+            usuarioId: actorId,
+            acao: 'CRIAR',
+            recurso: 'USUARIO',
+            recursoId: usuario.id,
+            ipOrigem,
+          },
+          tx,
+        );
+        return { ...usuario, cpf: CPF_MASCARADO };
       });
     } catch (error) {
       this.handlePrismaError(error);

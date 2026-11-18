@@ -1,8 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { createHash, randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { LoginDto } from './dto/login.dto.js';
+import { LoginRateLimitService } from './login-rate-limit.service.js';
 
 export interface AuthenticatedUser {
   id: number;
@@ -22,13 +27,21 @@ const INVALID_CREDENTIALS_MESSAGE = 'E-mail ou senha inválidos';
 
 @Injectable()
 export class AuthService {
+  private readonly dummyPasswordHash = bcrypt.hash(
+    randomBytes(32).toString('hex'),
+    12,
+  );
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly loginRateLimit: LoginRateLimitService,
   ) {}
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, ipOrigem = 'unknown') {
     const email = dto.email.trim().toLowerCase();
+    const keys = this.loginBucketKeys(ipOrigem, email);
+    await this.loginRateLimit.assertNotBlocked(keys);
     const usuario = await this.prisma.usuario.findUnique({
       where: { email },
       select: {
@@ -42,13 +55,15 @@ export class AuthService {
       },
     });
 
-    if (!usuario || usuario.status !== 'ATIVO') {
+    const senhaValida = await bcrypt.compare(
+      dto.senha,
+      usuario?.senha ?? (await this.dummyPasswordHash),
+    );
+    if (!usuario || usuario.status !== 'ATIVO' || !senhaValida) {
+      await this.loginRateLimit.recordFailure(keys);
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
-
-    if (!(await bcrypt.compare(dto.senha, usuario.senha))) {
-      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
-    }
+    await this.loginRateLimit.clearAccountKey(keys[1]);
 
     const payload: JwtPayload = {
       sub: usuario.id,
@@ -83,4 +98,19 @@ export class AuthService {
       tipo: usuario.tipo,
     };
   }
+
+  private loginBucketKeys(
+    ipOrigem: string,
+    email: string,
+  ): [ipKey: string, accountKey: string] {
+    return [
+      `ip:${this.hashIdentifier(ipOrigem)}`,
+      `email:${this.hashIdentifier(email)}`,
+    ];
+  }
+
+  private hashIdentifier(value: string): string {
+    return createHash('sha256').update(value).digest('hex');
+  }
+
 }

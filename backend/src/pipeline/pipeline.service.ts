@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import type { ExecutePipelineDto, PipelineSource } from './dto/execute-pipeline.dto.js';
 
 export type PipelineQualityStatus =
@@ -61,28 +62,48 @@ export interface PipelineExecutionSummary {
 export class PipelineService {
   private readonly logger = new Logger(PipelineService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
-  async execute(dto: ExecutePipelineDto = {}) {
+  async execute(
+    dto: ExecutePipelineDto = {},
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
     const startedAt = new Date();
     const source = dto.source ?? 'manual';
     const records = (dto.records ?? []) as PipelineRecord[];
 
-    const execution = await this.prisma.pipeline_Execucao.create({
-      data: {
-        source,
-        status: 'processando',
-        started_at: startedAt,
-        total_received: records.length,
-        total_processed: 0,
-        total_valid: 0,
-        total_corrected: 0,
-        total_filled: 0,
-        total_duplicates_removed: 0,
-        total_invalid: 0,
-        total_outliers: 0,
-        total_discarded: 0,
-      },
+    const execution = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.pipeline_Execucao.create({
+        data: {
+          source,
+          status: 'processando',
+          started_at: startedAt,
+          total_received: records.length,
+          total_processed: 0,
+          total_valid: 0,
+          total_corrected: 0,
+          total_filled: 0,
+          total_duplicates_removed: 0,
+          total_invalid: 0,
+          total_outliers: 0,
+          total_discarded: 0,
+        },
+      });
+      await this.audit.record(
+        {
+          usuarioId,
+          acao: 'EXECUTAR',
+          recurso: 'PIPELINE',
+          recursoId: created.id,
+          ipOrigem,
+        },
+        tx,
+      );
+      return created;
     });
 
     try {

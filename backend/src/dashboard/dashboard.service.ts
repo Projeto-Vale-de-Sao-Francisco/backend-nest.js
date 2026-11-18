@@ -5,6 +5,10 @@ import {
   DashboardFiltrosDto,
   HistoricoFiltrosDto,
 } from './dto/dashboard-filtros.dto.js';
+import {
+  authorizedPropertyIds,
+  type PropertyActor,
+} from '../common/property-access.js';
 
 const leituraSelect = {
   id: true,
@@ -50,9 +54,13 @@ type Cultura =
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async resumo(dto: DashboardFiltrosDto) {
+  async resumo(dto: DashboardFiltrosDto, actor: PropertyActor) {
     this.validarPeriodo(dto);
-    const where = this.filtroMedicoes(dto);
+    const propertyIds = this.scopedPropertyIds(
+      dto,
+      await authorizedPropertyIds(this.prisma, actor),
+    );
+    const where = this.filtroMedicoes(dto, propertyIds);
     const [atual, medias, totalLeituras, sensoresAtivos] = await Promise.all([
       this.prisma.medicao.findFirst({
         where,
@@ -64,7 +72,9 @@ export class DashboardService {
         _avg: { temperatura: true, umidade: true },
       }),
       this.prisma.medicao.count({ where }),
-      this.prisma.sensor.count({ where: this.filtroSensoresAtivos(dto) }),
+      this.prisma.sensor.count({
+        where: this.filtroSensoresAtivos(dto, propertyIds),
+      }),
     ]);
 
     return {
@@ -94,9 +104,13 @@ export class DashboardService {
     };
   }
 
-  async historico(dto: HistoricoFiltrosDto) {
+  async historico(dto: HistoricoFiltrosDto, actor: PropertyActor) {
     this.validarPeriodo(dto);
-    const where = this.filtroMedicoes(dto);
+    const propertyIds = this.scopedPropertyIds(
+      dto,
+      await authorizedPropertyIds(this.prisma, actor),
+    );
+    const where = this.filtroMedicoes(dto, propertyIds);
     const [leituras, total] = await Promise.all([
       this.prisma.medicao.findMany({
         where,
@@ -130,9 +144,16 @@ export class DashboardService {
     };
   }
 
-  private filtroMedicoes(dto: DashboardFiltrosDto): Prisma.MedicaoWhereInput {
+  private filtroMedicoes(
+    dto: DashboardFiltrosDto,
+    propertyIds: number[] | null,
+  ): Prisma.MedicaoWhereInput {
     const talhao: Prisma.TalhaoWhereInput = {
-      ...(dto.propriedade_id ? { propriedade_id: dto.propriedade_id } : {}),
+      ...(propertyIds !== null
+        ? { propriedade_id: { in: propertyIds } }
+        : dto.propriedade_id
+          ? { propriedade_id: dto.propriedade_id }
+          : {}),
       ...(dto.talhao_id ? { id: dto.talhao_id } : {}),
       ...(dto.cultura_id
         ? {
@@ -144,7 +165,10 @@ export class DashboardService {
     };
     return {
       ...(dto.sensor_id ? { sensor_id: dto.sensor_id } : {}),
-      ...(dto.propriedade_id || dto.talhao_id || dto.cultura_id
+      ...(propertyIds !== null ||
+      dto.propriedade_id ||
+      dto.talhao_id ||
+      dto.cultura_id
         ? { sensor: { dispositivo: { talhao } } }
         : {}),
       ...(dto.data_inicio || dto.data_fim
@@ -160,6 +184,7 @@ export class DashboardService {
 
   private filtroSensoresAtivos(
     dto: DashboardFiltrosDto,
+    propertyIds: number[] | null,
   ): Prisma.SensorWhereInput {
     return {
       status: 'ativo',
@@ -167,7 +192,11 @@ export class DashboardService {
       dispositivo: {
         status: 'ativo',
         talhao: {
-          ...(dto.propriedade_id ? { propriedade_id: dto.propriedade_id } : {}),
+          ...(propertyIds !== null
+            ? { propriedade_id: { in: propertyIds } }
+            : dto.propriedade_id
+              ? { propriedade_id: dto.propriedade_id }
+              : {}),
           ...(dto.talhao_id ? { id: dto.talhao_id } : {}),
           ...(dto.cultura_id
             ? {
@@ -179,6 +208,18 @@ export class DashboardService {
         },
       },
     };
+  }
+
+  private scopedPropertyIds(
+    dto: DashboardFiltrosDto,
+    authorizedIds: number[] | null,
+  ): number[] | null {
+    if (authorizedIds === null) {
+      return dto.propriedade_id ? [dto.propriedade_id] : null;
+    }
+    return dto.propriedade_id
+      ? authorizedIds.filter((id) => id === dto.propriedade_id)
+      : authorizedIds;
   }
 
   private culturaAtiva(

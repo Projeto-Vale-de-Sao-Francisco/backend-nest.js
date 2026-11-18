@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PipelineService } from './pipeline.service.js';
+import { AuditService } from '../audit/audit.service.js';
 
 describe('PipelineService', () => {
   let service: PipelineService;
@@ -16,8 +17,13 @@ describe('PipelineService', () => {
       pipeline_Problema: {
         createMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
+      audit_Log: { create: vi.fn().mockResolvedValue(undefined) },
     };
-    service = new PipelineService(prismaMock as any);
+    prismaMock.$transaction = vi.fn(async (callback) => callback(prismaMock));
+    service = new PipelineService(
+      prismaMock as any,
+      new AuditService(prismaMock as any),
+    );
   });
 
   it('identifica valores ausentes e descarta quando não há histórico suficiente', () => {
@@ -148,5 +154,14 @@ describe('PipelineService', () => {
     expect(response.status).toBe('success');
     expect(prismaMock.pipeline_Execucao.create).toHaveBeenCalled();
     expect(prismaMock.pipeline_Execucao.update).toHaveBeenCalled();
+    expect(prismaMock.audit_Log.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          acao: 'EXECUTAR',
+          recurso: 'PIPELINE',
+          recurso_id: '1',
+        }),
+      }),
+    );
   });
 });

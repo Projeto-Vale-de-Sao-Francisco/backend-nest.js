@@ -6,8 +6,14 @@ import {
   Get,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
+import type { DeviceAuthenticatedRequest } from './guards/api-key.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import type { AuthenticatedUser } from '../auth/auth.service.js';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import {
   optionalPositiveInt,
   optionalDate,
@@ -23,7 +29,7 @@ export class ReadingsController {
 
   /**
    * Requisito 6.1, 6.2, 6.6, 6.7: Registra leitura enviada pelo simulador ou sensor IoT.
-   * Autenticado com x-api-key ou x-device-token (6.6).
+   * Autenticado com credencial individual x-device-token; o modo legado usa x-api-key.
    */
   @Post()
   @UseGuards(ApiKeyGuard)
@@ -36,22 +42,29 @@ export class ReadingsController {
       }),
     )
     dto: CreateReadingDto,
+    @Req() request: DeviceAuthenticatedRequest,
   ) {
-    return this.readingsService.create(dto);
+    const device = request.authenticatedDevice;
+    if (!device) {
+      throw new UnauthorizedException('Credencial do dispositivo inválida.');
+    }
+    return this.readingsService.create(dto, device.id, request.ip);
   }
 
   /**
    * Requisito 6.5: Consultar sensores com a última leitura registrada.
    */
   @Get('latest')
-  findLatest() {
-    return this.readingsService.findLatestReadings();
+  @UseGuards(JwtAuthGuard)
+  findLatest(@CurrentUser() usuario: AuthenticatedUser) {
+    return this.readingsService.findLatestReadings(usuario);
   }
 
   /**
    * Requisito 6.3: Endpoint para consulta e histórico de leituras.
    */
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll(
     @Query('sensorId') sensorId?: string,
     @Query('talhaoId') talhaoId?: string,
@@ -59,6 +72,7 @@ export class ReadingsController {
     @Query('dataInicio') dataInicio?: string,
     @Query('dataFim') dataFim?: string,
     @Query('limit') limit?: string,
+    @CurrentUser() usuario?: AuthenticatedUser,
   ) {
     const inicio = optionalDate(dataInicio, 'dataInicio');
     const fim = optionalDate(dataFim, 'dataFim');
@@ -74,6 +88,6 @@ export class ReadingsController {
       dataInicio: inicio,
       dataFim: fim,
       limit: optionalPositiveInt(limit, 'limit'),
-    });
+    }, usuario);
   }
 }

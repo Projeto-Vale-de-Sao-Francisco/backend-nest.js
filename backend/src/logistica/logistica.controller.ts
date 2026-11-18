@@ -7,8 +7,12 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
+import type { AuthenticatedUser } from '../auth/auth.service.js';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -28,23 +32,36 @@ export class LogisticaController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  create(@Body() dto: CreateLogisticaDto) {
-    return this.logistica.create(dto);
+  create(
+    @Body() dto: CreateLogisticaDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
+  ) {
+    return this.logistica.create(dto, usuario.id, request.ip);
   }
 
   @Get()
-  findAll(@Query() dto: ListLogisticaDto) {
-    return this.logistica.findAll(dto);
+  findAll(
+    @Query() dto: ListLogisticaDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+  ) {
+    return this.logistica.findAll(dto, usuario);
   }
 
   @Get('resumo')
-  resumo(@Query() dto: ResumoLogisticaDto) {
-    return this.logistica.resumo(dto);
+  resumo(
+    @Query() dto: ResumoLogisticaDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+  ) {
+    return this.logistica.resumo(dto, usuario);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.logistica.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() usuario: AuthenticatedUser,
+  ) {
+    return this.logistica.findOne(id, usuario);
   }
 
   @Patch(':id')
@@ -53,7 +70,9 @@ export class LogisticaController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateLogisticaDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
   ) {
-    return this.logistica.update(id, dto);
+    return this.logistica.update(id, dto, usuario.id, request.ip);
   }
 }

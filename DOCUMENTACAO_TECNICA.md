@@ -55,7 +55,7 @@ backend-nest.js/
 
 ```mermaid
 flowchart LR
-    A["Simulador IoT / Hardware"] -->|"POST /readings (x-api-key)"| B["ReadingsModule"]
+    A["Simulador IoT / Hardware"] -->|"POST /readings (x-device-token)"| B["ReadingsModule"]
     B -->|"Validação Física (-50..65°C, 0..100%)"| B
     B -->|"Salva medição"| C[("PostgreSQL (Medicao)")]
     B -->|"Aciona gatilho"| D["AlertsModule"]
@@ -90,7 +90,9 @@ O sistema diferencia **Dispositivo** (hardware físico fixado no talhão) de **S
    - **Plausibilidade Física (6.2):** Lança `BadRequestException` caso temperatura esteja fora de `[-50°C, 65°C]` ou umidade fora de `[0%, 100%]`.
    - **Métricas adicionais (6.7):** Suporte opcional a `umidadeSolo` (0-100%), `luminosidade` (lux), `precipitacao` (mm) e `pressao`.
 2. **Autenticação de Dispositivos/Simulador (`ApiKeyGuard` — 6.6):**
-   - Protege a rota `POST /readings` validando o cabeçalho `x-api-key` ou `x-device-token`. A chave padrão é configurada via `DEVICE_API_KEY` no `.env`.
+   - `x-device-token` identifica um dispositivo por credencial individual; somente o hash SHA-256 é armazenado. O provisionamento/rotação é feito fora da API pelo comando `npm run device:credential -- --device-id=<id> --admin-id=<id> --ip-origem=<ip>`, que valida um ADMIN ativo e registra o IP informado na auditoria, mostrando o token uma única vez no terminal. `DELETE /devices/:id/credential` revoga a credencial. A API nunca retorna credenciais ou hashes.
+   - `sensorId` e `codigoDispositivo` no payload apenas selecionam/confirmam sensores do dispositivo já autenticado. A chave global `x-api-key` fica disponível somente como transição opt-in, limitada a um único `DEVICE_API_KEY_LEGACY_DEVICE_ID`.
+   - `Audit_Log` é append-only no banco: triggers PostgreSQL rejeitam `UPDATE` e `DELETE`. A API administrativa continua somente leitura.
 3. **Consulta de Histórico e Última Leitura (6.3 e 6.5):**
    - `GET /readings`: Histórico com filtros por período (`dataInicio`, `dataFim`), sensor, talhão e limite.
    - `GET /readings/latest`: Consulta todos os sensores com sua respectiva medição mais recente.
@@ -139,9 +141,19 @@ O sistema diferencia **Dispositivo** (hardware físico fixado no talhão) de **S
 Crie ou confirme o arquivo `backend/.env` com as configurações:
 ```env
 DATABASE_URL="postgresql://postgres:1234@localhost:5432/postgres?schema=public"
-DEVICE_API_KEY="iot-simulator-secret-2026"
+DEVICE_API_KEY=""
+DEVICE_API_KEY_LEGACY_ENABLED=false
+DEVICE_API_KEY_LEGACY_DEVICE_ID=""
 PORT=3000
 ```
+
+Após aplicar `npx prisma migrate deploy`, emita token individual para cada
+dispositivo existente e configure-o no integrador como
+`DEVICE_TOKEN_<CODIGO_NORMALIZADO>`. A migration não cria credenciais em lote.
+Durante a transição, a chave global só funciona se habilitada e associada a um
+único ID de dispositivo; desabilite-a depois de atualizar os integradores.
+O rate limit de login também usa o PostgreSQL compartilhado e retorna `503`
+quando o banco não pode aplicar/verificar os limites.
 
 ### 2. Sincronizar o Banco e Popular Dados de Teste
 ```bash

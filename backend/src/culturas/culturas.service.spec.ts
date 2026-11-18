@@ -7,9 +7,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { CulturasService } from './culturas.service.js';
 import { CreateCulturaDto } from './dto/create-cultura.dto.js';
+import { AuditService } from '../audit/audit.service.js';
 
 describe('CulturasService', () => {
   let db: {
+    $transaction: ReturnType<typeof vi.fn>;
+    audit_Log: { create: ReturnType<typeof vi.fn> };
     cultura: {
       findFirst: ReturnType<typeof vi.fn>;
       findUnique: ReturnType<typeof vi.fn>;
@@ -22,6 +25,8 @@ describe('CulturasService', () => {
 
   beforeEach(() => {
     db = {
+      $transaction: vi.fn(),
+      audit_Log: { create: vi.fn().mockResolvedValue(undefined) },
       cultura: {
         findFirst: vi.fn().mockResolvedValue(null),
         findUnique: vi.fn(),
@@ -30,7 +35,11 @@ describe('CulturasService', () => {
         update: vi.fn(),
       },
     };
-    service = new CulturasService(db as unknown as PrismaService);
+    db.$transaction.mockImplementation((callback) => callback(db));
+    service = new CulturasService(
+      db as unknown as PrismaService,
+      new AuditService(db as unknown as PrismaService),
+    );
   });
 
   it('cadastra cultura com faixas coerentes e nome normalizado', async () => {

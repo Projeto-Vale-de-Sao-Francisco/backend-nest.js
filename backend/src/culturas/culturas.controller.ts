@@ -6,8 +6,12 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
+import type { AuthenticatedUser } from '../auth/auth.service.js';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -23,8 +27,12 @@ export class CulturasController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  create(@Body() dto: CreateCulturaDto) {
-    return this.culturas.create(dto);
+  create(
+    @Body() dto: CreateCulturaDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
+  ) {
+    return this.culturas.create(dto, usuario.id, request.ip);
   }
 
   @Get()
@@ -40,7 +48,12 @@ export class CulturasController {
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCulturaDto) {
-    return this.culturas.update(id, dto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCulturaDto,
+    @CurrentUser() usuario: AuthenticatedUser,
+    @Req() request: Request,
+  ) {
+    return this.culturas.update(id, dto, usuario.id, request.ip);
   }
 }

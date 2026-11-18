@@ -1,65 +1,92 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
-  NotFoundException,
   Optional,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AlertsService } from '../alerts/alerts.service.js';
 import { PipelineService } from '../pipeline/pipeline.service.js';
 import { CreateReadingDto } from './dto/create-reading.dto.js';
+import { AuditService } from '../audit/audit.service.js';
+import {
+  authorizedPropertyIds,
+  type PropertyActor,
+} from '../common/property-access.js';
 
 @Injectable()
 export class ReadingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly alertsService: AlertsService,
+    private readonly audit: AuditService,
     @Optional() private readonly pipelineService?: PipelineService,
   ) {}
 
   /**
    * Requisito 6.1, 6.2, 6.7: Registra e valida uma leitura e aciona geração de alertas (9.1).
    */
-  async create(dto: CreateReadingDto) {
+  async create(
+    dto: CreateReadingDto,
+    authenticatedDeviceId: number,
+    ipOrigem?: string,
+  ) {
     this.validatePlausibility(dto);
 
     try {
-      const sensor = await this.resolveAndValidateSensor(dto);
+      const sensor = await this.resolveAndValidateSensor(
+        dto,
+        authenticatedDeviceId,
+      );
 
       const dataHora = dto.dataHora ? new Date(dto.dataHora) : new Date();
       if (Number.isNaN(dataHora.getTime())) {
         throw new BadRequestException('Data/hora da leitura inválida.');
       }
 
-      const medicao = await this.prisma.medicao.create({
-        data: {
-          sensor_id: sensor.id,
-          data_hora: dataHora,
-          temperatura: dto.temperatura,
-          umidade: dto.umidade,
-          umidade_solo: dto.umidadeSolo ?? null,
-          luminosidade: dto.luminosidade ?? null,
-          precipitacao: dto.precipitacao ?? null,
-          pressao: dto.pressao ?? null,
-        },
-        include: {
-          sensor: {
-            include: {
-              dispositivo: {
-                include: {
-                  talhao: true,
+      const medicao = await this.prisma.$transaction(async (tx) => {
+        const registro = await tx.medicao.create({
+          data: {
+            sensor_id: sensor.id,
+            data_hora: dataHora,
+            temperatura: dto.temperatura,
+            umidade: dto.umidade,
+            umidade_solo: dto.umidadeSolo ?? null,
+            luminosidade: dto.luminosidade ?? null,
+            precipitacao: dto.precipitacao ?? null,
+            pressao: dto.pressao ?? null,
+          },
+          include: {
+            sensor: {
+              include: {
+                dispositivo: {
+                  include: {
+                    talhao: true,
+                  },
                 },
               },
             },
           },
-        },
+        });
+        await this.audit.record(
+          {
+            acao: 'RECEBER',
+            recurso: 'LEITURA',
+            recursoId: registro.id,
+            ipOrigem,
+          },
+          tx,
+        );
+        return registro;
       });
 
       // Requisito 9.1: Processa alertas climáticos automaticamente
       const alertas = await this.alertsService.checkAndCreateAlerts(
         medicao.id,
         sensor.id,
+        ipOrigem,
       );
 
       if (this.pipelineService) {
@@ -147,7 +174,7 @@ export class ReadingsService {
         error?.message?.includes('ECONNREFUSED')
       ) {
         throw new ServiceUnavailableException(
-          'Banco de dados PostgreSQL (localhost:5432) indisponível. Inicie o PostgreSQL para gravar medições locais.',
+          'Banco de dados indisponível para registrar a leitura.',
         );
       }
       throw error;
@@ -164,8 +191,11 @@ export class ReadingsService {
     dataInicio?: string | Date;
     dataFim?: string | Date;
     limit?: number;
-  }) {
+  }, actor?: PropertyActor) {
     const where: any = {};
+    const propertyIds = actor
+      ? await authorizedPropertyIds(this.prisma, actor)
+      : [];
 
     if (filters?.sensorId) {
       where.sensor_id = filters.sensorId;
@@ -185,6 +215,19 @@ export class ReadingsService {
         dispositivo: {
           ...where.sensor?.dispositivo,
           talhao_id: filters.talhaoId,
+        },
+      };
+    }
+
+    if (propertyIds !== null) {
+      where.sensor = {
+        ...where.sensor,
+        dispositivo: {
+          ...where.sensor?.dispositivo,
+          talhao: {
+            ...where.sensor?.dispositivo?.talhao,
+            propriedade_id: { in: propertyIds },
+          },
         },
       };
     }
@@ -225,8 +268,19 @@ export class ReadingsService {
   /**
    * Requisito 6.5: Consultar sensores com sua última leitura registrada.
    */
-  async findLatestReadings() {
+  async findLatestReadings(actor?: PropertyActor) {
+    const propertyIds = actor
+      ? await authorizedPropertyIds(this.prisma, actor)
+      : [];
     const sensores = await this.prisma.sensor.findMany({
+      where:
+        propertyIds === null
+          ? undefined
+          : {
+              dispositivo: {
+                talhao: { propriedade_id: { in: propertyIds } },
+              },
+            },
       include: {
         dispositivo: {
           include: {
@@ -262,63 +316,60 @@ export class ReadingsService {
   /**
    * Requisito 6.2: Identifica o sensor e garante que o sensor e seu hardware estão ativos.
    */
-  private async resolveAndValidateSensor(dto: CreateReadingDto) {
+  private async resolveAndValidateSensor(
+    dto: CreateReadingDto,
+    authenticatedDeviceId: number,
+  ) {
+    if (
+      !Number.isSafeInteger(authenticatedDeviceId) ||
+      authenticatedDeviceId < 1
+    ) {
+      throw new UnauthorizedException('Credencial do dispositivo inválida.');
+    }
+
     if (!dto.sensorId && !dto.codigoDispositivo?.trim()) {
       throw new BadRequestException(
         'É obrigatório informar "sensorId" ou "codigoDispositivo".',
       );
     }
 
-    let sensor = null;
+    const dispositivo = await this.prisma.dispositivo.findUnique({
+      where: { id: authenticatedDeviceId },
+      include: { sensores: true, talhao: true },
+    });
 
-    if (dto.sensorId) {
-      sensor = await this.prisma.sensor.findUnique({
-        where: { id: dto.sensorId },
-        include: { dispositivo: true },
-      });
-
-      if (!sensor) {
-        throw new NotFoundException(
-          `Sensor com ID ${dto.sensorId} não encontrado.`,
-        );
-      }
-      if (sensor.dispositivo.status !== 'ativo') {
-        throw new BadRequestException(
-          'Dispositivo inativo. Leituras rejeitadas.',
-        );
-      }
-    } else if (dto.codigoDispositivo) {
-      const dispositivo = await this.prisma.dispositivo.findUnique({
-        where: { codigo: dto.codigoDispositivo.trim() },
-        include: {
-          sensores: true,
-        },
-      });
-
-      if (!dispositivo) {
-        throw new NotFoundException(
-          `Dispositivo com código "${dto.codigoDispositivo}" não encontrado.`,
-        );
-      }
-
-      if (dispositivo.status !== 'ativo') {
-        throw new BadRequestException(
-          `Dispositivo "${dto.codigoDispositivo}" está com status inativo. Leituras rejeitadas.`,
-        );
-      }
-
-      // Obtém o primeiro sensor ativo do dispositivo
-      sensor = dispositivo.sensores.find((s) => s.status === 'ativo') ?? null;
-
-      if (!sensor) {
-        throw new BadRequestException(
-          'Dispositivo sem sensor ativo. Ative o sensor antes de enviar leituras.',
-        );
-      }
+    if (!dispositivo) {
+      throw new UnauthorizedException('Credencial do dispositivo inválida.');
     }
 
+    if (dispositivo.status !== 'ativo') {
+      throw new BadRequestException(
+        'Dispositivo inativo. Leituras rejeitadas.',
+      );
+    }
+
+    if (
+      dto.codigoDispositivo?.trim() &&
+      dto.codigoDispositivo.trim() !== dispositivo.codigo
+    ) {
+      throw new ForbiddenException(
+        'A leitura não pertence ao dispositivo autenticado.',
+      );
+    }
+
+    const sensor = dto.sensorId
+      ? dispositivo.sensores.find((item) => item.id === dto.sensorId)
+      : dispositivo.sensores.find((item) => item.status === 'ativo');
+
     if (!sensor) {
-      throw new NotFoundException('Sensor não localizado.');
+      if (dto.sensorId) {
+        throw new ForbiddenException(
+          'A leitura não pertence ao dispositivo autenticado.',
+        );
+      }
+      throw new BadRequestException(
+        'Dispositivo sem sensor ativo. Ative o sensor antes de enviar leituras.',
+      );
     }
 
     if (sensor.status !== 'ativo') {
@@ -327,7 +378,15 @@ export class ReadingsService {
       );
     }
 
-    return sensor;
+    return {
+      ...sensor,
+      dispositivo: {
+        id: dispositivo.id,
+        codigo: dispositivo.codigo,
+        status: dispositivo.status,
+        talhao: dispositivo.talhao,
+      },
+    };
   }
 
   /**

@@ -71,6 +71,11 @@ model Audit_Log {
   criado_em    DateTime @default(now())
 
   usuario Usuario? @relation(fields: [usuario_id], references: [id])
+
+  @@index([usuario_id, criado_em])
+  @@index([acao, criado_em])
+  @@index([recurso, recurso_id])
+  @@index([criado_em])
 }
 
 model Usuario_Empresa {
@@ -272,6 +277,7 @@ model Dispositivo {
 
   talhao   Talhao   @relation(fields: [talhao_id], references: [id])
   sensores Sensor[]
+  credencial Dispositivo_Credencial?
 }
 
 model Sensor {
@@ -324,8 +330,8 @@ model Pipeline_Execucao {
   id                      Int                 @id @default(autoincrement())
   source                  String
   status                  String
-  started_at              DateTime            @default(now())
-  finished_at             DateTime?
+  started_at              DateTime            @default(now()) @db.Timestamptz(6)
+  finished_at             DateTime?           @db.Timestamptz(6)
   duration_ms             Int?
   total_received          Int                 @default(0)
   total_processed         Int                 @default(0)
@@ -337,7 +343,7 @@ model Pipeline_Execucao {
   total_outliers          Int                 @default(0)
   total_discarded         Int                 @default(0)
   summary_json            Json?
-  created_at              DateTime            @default(now())
+  created_at              DateTime            @default(now()) @db.Timestamptz(6)
 
   problemas               Pipeline_Problema[]
 
@@ -353,9 +359,31 @@ model Pipeline_Problema {
   quantidade       Int               @default(0)
   motivo           String?
   detalhes         Json?
-  created_at       DateTime          @default(now())
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
 
-  execution        Pipeline_Execucao @relation(fields: [execution_id], references: [id])
+  execution        Pipeline_Execucao @relation(fields: [execution_id], references: [id], onDelete: Cascade)
 
   @@index([execution_id])
+}
+
+model Dispositivo_Credencial {
+  id             Int       @id @default(autoincrement())
+  dispositivo_id Int       @unique
+  token_hash     String    @unique
+  created_at     DateTime  @default(now()) @db.Timestamptz(3)
+  revoked_at     DateTime? @db.Timestamptz(3)
+
+  dispositivo Dispositivo @relation(fields: [dispositivo_id], references: [id], onDelete: Cascade)
+
+  @@index([revoked_at])
+}
+
+model Login_Rate_Limit {
+  bucket_key        String   @id
+  attempts          Int      @default(0)
+  window_started_at DateTime @db.Timestamptz(3)
+  blocked_until     DateTime? @db.Timestamptz(3)
+  updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  @@index([updated_at])
 }

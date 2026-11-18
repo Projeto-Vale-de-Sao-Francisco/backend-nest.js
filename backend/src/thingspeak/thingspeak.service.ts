@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { AlertsService } from '../alerts/alerts.service.js';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 
 @Injectable()
 export class ThingspeakService {
@@ -16,12 +17,47 @@ export class ThingspeakService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly alerts: AlertsService,
+    private readonly audit: AuditService,
   ) {}
-  async enviarDados(temperatura: number, umidade: number) {
-    const channelId = process.env.THINGSPEAK_CHANNEL_ID || '3502672';
-    const writeApiKey =
-      process.env.THINGSPEAK_WRITE_API_KEY || 'GZS2ZFL9QXV1TNLD';
+  private requiredConfig(name: 'THINGSPEAK_CHANNEL_ID' | 'THINGSPEAK_WRITE_API_KEY' | 'THINGSPEAK_READ_API_KEY') {
+    const value = process.env[name]?.trim();
+    if (!value) {
+      throw new ServiceUnavailableException(
+        `Integração ThingSpeak indisponível: ${name} não configurada.`,
+      );
+    }
+    return value;
+  }
+  async enviarDados(
+    temperatura: number,
+    umidade: number,
+    usuarioId?: number,
+    ipOrigem?: string,
+  ) {
+    if (
+      !Number.isFinite(temperatura) ||
+      temperatura < -50 ||
+      temperatura > 65 ||
+      !Number.isFinite(umidade) ||
+      umidade < 0 ||
+      umidade > 100
+    ) {
+      throw new BadRequestException('Temperatura ou umidade inválida.');
+    }
+    const channelId = this.requiredConfig('THINGSPEAK_CHANNEL_ID');
+    const writeApiKey = this.requiredConfig('THINGSPEAK_WRITE_API_KEY');
 
+    await this.prisma.$transaction((tx) =>
+      this.audit.record(
+        {
+          usuarioId,
+          acao: 'ENVIAR_DADOS',
+          recurso: 'THINGSPEAK',
+          ipOrigem,
+        },
+        tx,
+      ),
+    );
     const resposta = await axios.get('https://api.thingspeak.com/update', {
       params: {
         api_key: writeApiKey,
@@ -39,9 +75,8 @@ export class ThingspeakService {
   }
 
   async buscarDados() {
-    const channelId = process.env.THINGSPEAK_CHANNEL_ID || '3502672';
-    const readApiKey =
-      process.env.THINGSPEAK_READ_API_KEY || 'RJY0US09YQGX0VMQ';
+    const channelId = this.requiredConfig('THINGSPEAK_CHANNEL_ID');
+    const readApiKey = this.requiredConfig('THINGSPEAK_READ_API_KEY');
 
     const resposta = await axios.get(
       `https://api.thingspeak.com/channels/${channelId}/feeds.json`,
@@ -60,7 +95,7 @@ export class ThingspeakService {
     return this.prisma.dispositivo.findMany();
   }
 
-  async salvarUltimaMedicao() {
+  async salvarUltimaMedicao(usuarioId?: number, ipOrigem?: string) {
     const raw = this.config.get<string>('THINGSPEAK_SENSOR_ID');
     if (
       !raw ||
@@ -144,10 +179,24 @@ export class ThingspeakService {
           data_hora: dataHora,
         },
       });
+      await this.audit.record(
+        {
+          usuarioId,
+          acao: 'IMPORTAR',
+          recurso: 'LEITURA_THINGSPEAK',
+          recursoId: medicao.id,
+          ipOrigem,
+        },
+        tx,
+      );
       return { medicao, importada: true };
     });
     const alertasGerados = resultado.importada
-      ? await this.alerts.checkAndCreateAlerts(resultado.medicao.id, sensorId)
+      ? await this.alerts.checkAndCreateAlerts(
+          resultado.medicao.id,
+          sensorId,
+          ipOrigem,
+        )
       : [];
     return {
       mensagem: resultado.importada

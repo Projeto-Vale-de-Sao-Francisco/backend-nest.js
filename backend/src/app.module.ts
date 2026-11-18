@@ -13,6 +13,7 @@ import { LotesModule } from './lotes/lotes.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { LogisticaModule } from './logistica/logistica.module.js';
 import { PipelineModule } from './pipeline/pipeline.module.js';
+import { AuditModule } from './audit/audit.module.js';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { PipelineModule } from './pipeline/pipeline.module.js';
     DashboardModule,
     LogisticaModule,
     PipelineModule,
+    AuditModule,
   ],
 })
 export class AppModule {}
