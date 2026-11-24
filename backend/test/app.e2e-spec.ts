@@ -23,8 +23,11 @@ describe('API contracts (e2e)', () => {
       .overrideProvider(ConfigService)
       .useValue({
         getOrThrow: () => 'test-jwt-secret',
-        get: (key: string) =>
-          key === 'DEVICE_API_KEY' ? 'test-key' : undefined,
+        get: (key: string, defaultValue?: unknown) => {
+          if (key === 'DEVICE_API_KEY') return 'test-key';
+          if (key === 'MERCADO_FONTES_ATIVAS') return '';
+          return defaultValue;
+        },
       })
       .overrideProvider(DevicesService)
       .useValue(devices)
@@ -35,7 +38,7 @@ describe('API contracts (e2e)', () => {
     await app.init();
   });
   afterAll(async () => {
-    await app.close();
+    await app?.close();
   });
   beforeEach(() => {
     vi.clearAllMocks();
