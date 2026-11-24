@@ -4,11 +4,11 @@ Este módulo prepara uma EC2 separada. Não altera Render, Vercel ou Aiven;
 não habilita Azure, Python ou AWS IoT Core e não executa migrations.
 
 Para publicação via GHCR, variáveis, primeiro início, atualização e rollback, seguir
-[DEPLOY_BACKEND.md](DEPLOY_BACKEND.md). O workflow é manual e não publica por padrão.
+[DEPLOY_BACKEND.md](DEPLOY_BACKEND.md). O workflow valida em push e PR, sem publicar.
 
 ## Inspeção do backend
 
-- `package.json`: build `nest build`, produção `node dist/main`. A imagem usa
+- `package.json`: build `nest build`, producao `prisma migrate deploy && node dist/main`. A imagem usa
   explicitamente `node dist/main.js`.
 - Lockfile: NestJS 12.0.4 exige Node >=20; Prisma/Client 7.10.0 exige Node
   ^20.19, ^22.12 ou >=24; bcrypt 6 exige Node >=18. A imagem usa Node 24,
@@ -25,7 +25,7 @@ Para publicação via GHCR, variáveis, primeiro início, atualização e rollba
 - CORS existente: origens explícitas em `CORS_ORIGINS`, separadas por vírgula;
   em produção não adiciona localhost. Informar a origem HTTPS exata da Vercel,
   sem caminho. CORS não substitui autenticação nem restringe clientes IoT.
-- `GET /` retorna `Hello World!` e é usado como teste de vida Docker. O Prisma
+- `GET /auth/me` sem token retorna 401 e e usado como teste de vida Docker. O Prisma
   conecta ao iniciar, mas esse endpoint não testa continuamente o banco. Não existe
   endpoint dedicado de readiness. Systemd reinicia processos encerrados; o status
   Docker `unhealthy`, isoladamente, exige intervenção e não dispara reinício.
