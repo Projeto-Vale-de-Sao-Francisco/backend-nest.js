@@ -1,13 +1,11 @@
-name: Backend EC2 image
+name: Backend EC2 build validation
 
 on:
+  push:
+    branches: [feat/backend-mvp]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      publish:
-        description: 'Publicar no GHCR após validar (false = somente teste)'
-        type: boolean
-        default: false
-        required: true
 
 permissions:
   contents: read
@@ -15,14 +13,49 @@ permissions:
 jobs:
   image:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    permissions:
-      contents: read
-      packages: write
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: sivale
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sivale"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:ci-only@127.0.0.1:5432/sivale
+      JWT_SECRET: ci-only-not-a-production-secret
+      MERCADO_FONTES_ATIVAS: ''
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Clean dependency installation
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client (no migrations)
+        working-directory: backend
+        run: npx --no-install prisma generate
+      - name: Unit tests
+        working-directory: backend
+        run: npm test
+      - name: API contract tests
+        working-directory: backend
+        run: npm run test:e2e
+      - name: NestJS build
+        working-directory: backend
+        run: npm run build
       - uses: docker/setup-buildx-action@v3
       - name: Nome e versão
         id: image
@@ -50,7 +83,7 @@ jobs:
           IMAGE: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
         run: |
           set -euo pipefail
-          docker network create sivale-test
+          docker network create --internal sivale-test
           # Credenciais fictícias, exclusivas do banco descartável deste job.
           docker run -d --name test-db --network sivale-test \
             -e POSTGRES_PASSWORD=ci-only -e POSTGRES_DB=sivale postgres:17-alpine
@@ -63,7 +96,7 @@ jobs:
             --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m \
             --cap-drop ALL --security-opt no-new-privileges \
             -e DATABASE_URL=postgresql://postgres:ci-only@test-db:5432/sivale \
-            -e JWT_SECRET=ci-only-not-a-production-secret "$IMAGE"
+            -e JWT_SECRET=ci-only-not-a-production-secret -e MERCADO_FONTES_ATIVAS= "$IMAGE"
           for attempt in {1..45}; do
             state=$(docker inspect --format '{{.State.Health.Status}}' test-backend)
             if [ "$state" = healthy ]; then break; fi
@@ -72,25 +105,14 @@ jobs:
           test "$(docker inspect --format '{{.State.Health.Status}}' test-backend)" = healthy
           # Outro container resolve o mesmo alias/porta que o Caddy usa.
           docker run --rm --network sivale-test --entrypoint node "$IMAGE" \
-            -e "fetch('http://backend:3000/').then(async r=>{if(!r.ok || await r.text() !== 'Hello World!')process.exit(1)}).catch(()=>process.exit(1))"
+            -e "fetch('http://backend:3000/auth/me').then(r=>{if(r.status !== 401)process.exit(1)}).catch(()=>process.exit(1))"
           docker run --rm --network none --entrypoint node "$IMAGE" \
             -e "import('bcrypt').then(async b=>{const h=await b.hash('ci-only',4);if(!await b.compare('ci-only',h))process.exit(1)})"
-      - name: Login GHCR
-        if: ${{ inputs.publish }}
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publicar a imagem já testada
-        if: ${{ inputs.publish }}
-        env:
-          IMAGE: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
+      - name: Container diagnostics
+        if: failure()
         run: |
-          set -euo pipefail
-          docker push "$IMAGE"
-          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE")
-          echo "BACKEND_IMAGE=$digest" >> "$GITHUB_STEP_SUMMARY"
+          docker logs test-backend 2>&1 || true
+          docker logs test-db 2>&1 || true
       - name: Limpar recursos de teste
         if: always()
         run: |
