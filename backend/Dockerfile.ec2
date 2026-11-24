@@ -6,10 +6,12 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY prisma.config.ts ./
 COPY prisma ./prisma
-RUN npx prisma generate
+# Prisma needs tsconfig to infer the .js imports used by the compiled ESM client.
 COPY tsconfig.json tsconfig.build.json nest-cli.json ./
+RUN npx prisma generate
 COPY src ./src
 RUN NODE_OPTIONS=--max-old-space-size=4096 npm run build && npm prune --omit=dev
+RUN node --input-type=module -e "await import('./dist/generated/prisma/client.js')"
 
 FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production PORT=3000
@@ -20,5 +22,5 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 USER node
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 CMD ["node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 CMD ["node", "-e", "fetch('http://127.0.0.1:3000/auth/me').then(r=>{if(r.status!==401){console.error('Healthcheck expected HTTP 401, received',r.status);process.exit(1)}}).catch(e=>{console.error(e.message);process.exit(1)})"]
 CMD ["node", "dist/main.js"]

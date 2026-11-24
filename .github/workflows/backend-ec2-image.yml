@@ -49,8 +49,10 @@ jobs:
         env:
           IMAGE: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
         run: |
-          set -euo pipefail
-          docker network create sivale-test
+          set -Eeuo pipefail
+          trap 'status=$?; echo "::error::Smoke test failed at line $LINENO (exit $status)"; exit "$status"' ERR
+          echo 'Creating isolated Docker network'
+          docker network create --internal sivale-test
           # Credenciais fictícias, exclusivas do banco descartável deste job.
           docker run -d --name test-db --network sivale-test \
             -e POSTGRES_PASSWORD=ci-only -e POSTGRES_DB=sivale postgres:17-alpine
@@ -59,22 +61,45 @@ jobs:
             sleep 2
           done
           docker exec test-db pg_isready -U postgres -d sivale
+          echo 'PostgreSQL ready; starting backend container'
           docker run -d --name test-backend --network sivale-test --network-alias backend \
             --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m \
             --cap-drop ALL --security-opt no-new-privileges \
             -e DATABASE_URL=postgresql://postgres:ci-only@test-db:5432/sivale \
-            -e JWT_SECRET=ci-only-not-a-production-secret "$IMAGE"
+            -e JWT_SECRET=ci-only-not-a-production-secret -e MERCADO_FONTES_ATIVAS= "$IMAGE"
           for attempt in {1..45}; do
+            if [ "$(docker inspect --format '{{.State.Running}}' test-backend)" != true ]; then
+              echo '::error::Backend container exited before becoming healthy; see Container diagnostics'
+              exit 1
+            fi
             state=$(docker inspect --format '{{.State.Health.Status}}' test-backend)
+            echo "Backend health attempt $attempt/45: $state"
             if [ "$state" = healthy ]; then break; fi
             sleep 2
           done
-          test "$(docker inspect --format '{{.State.Health.Status}}' test-backend)" = healthy
+          if [ "$(docker inspect --format '{{.State.Health.Status}}' test-backend)" != healthy ]; then
+            echo '::error::Backend healthcheck timed out; see Container diagnostics'
+            exit 1
+          fi
+          echo 'Checking HTTP through Docker network alias backend'
           # Outro container resolve o mesmo alias/porta que o Caddy usa.
           docker run --rm --network sivale-test --entrypoint node "$IMAGE" \
-            -e "fetch('http://backend:3000/').then(async r=>{if(!r.ok || await r.text() !== 'Hello World!')process.exit(1)}).catch(()=>process.exit(1))"
+            -e "fetch('http://backend:3000/auth/me').then(r=>{console.log('GET /auth/me:',r.status);if(r.status!==401)process.exit(1)}).catch(e=>{console.error(e);process.exit(1)})"
+          echo 'Checking native bcrypt without network access'
           docker run --rm --network none --entrypoint node "$IMAGE" \
-            -e "import('bcrypt').then(async b=>{const h=await b.hash('ci-only',4);if(!await b.compare('ci-only',h))process.exit(1)})"
+            -e "import('bcrypt').then(async b=>{const h=await b.hash('ci-only',4);if(!await b.compare('ci-only',h))throw Error('bcrypt comparison failed');console.log('bcrypt OK')}).catch(e=>{console.error(e);process.exit(1)})"
+      - name: Container diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          for container in test-backend test-db; do
+            echo "::group::Diagnostics: $container"
+            docker inspect --format 'status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$container" || true
+            docker inspect --format '{{json .State.Health}}' "$container" || true
+            docker logs --tail 200 --timestamps "$container" 2>&1 || true
+            echo '::endgroup::'
+          done
+          docker network inspect --format '{{json .Containers}}' sivale-test || true
       - name: Login GHCR
         if: ${{ inputs.publish }}
         uses: docker/login-action@v3
