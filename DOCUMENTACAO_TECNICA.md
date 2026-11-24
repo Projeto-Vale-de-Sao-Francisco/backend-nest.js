@@ -139,7 +139,7 @@ O sistema diferencia **Dispositivo** (hardware físico fixado no talhão) de **S
 Crie ou confirme o arquivo `backend/.env` com as configurações:
 ```env
 DATABASE_URL="postgresql://postgres:1234@localhost:5432/postgres?schema=public"
-DEVICE_API_KEY="iot-simulator-secret-2026"
+DEVICE_API_KEY="CONFIGURE_EM_RUNTIME"
 PORT=3000
 ```
 

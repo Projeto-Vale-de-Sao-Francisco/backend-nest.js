@@ -18,12 +18,15 @@ interface ReadingPayload {
 }
 
 const API_URL = process.env.API_URL || 'http://localhost:3000';
-const API_KEY = process.env.DEVICE_API_KEY || 'iot-simulator-secret-2026';
+const API_KEY = process.env.DEVICE_API_KEY;
 
 // Configurações do ThingSpeak
 const THINGSPEAK_CHANNEL_ID = process.env.THINGSPEAK_CHANNEL_ID || '3502672';
 const THINGSPEAK_WRITE_API_KEY =
-  process.env.THINGSPEAK_WRITE_API_KEY || 'GZS2ZFL9QXV1TNLD';
+  process.env.THINGSPEAK_WRITE_API_KEY;
+if (!API_KEY || !THINGSPEAK_WRITE_API_KEY) {
+  throw new Error('Configure DEVICE_API_KEY e THINGSPEAK_WRITE_API_KEY para o simulador');
+}
 const THINGSPEAK_DEVICE = process.env.THINGSPEAK_DEVICE || 'ESP32-TALHAO-01';
 
 // O plano gratuito do ThingSpeak exige no mínimo 15s entre atualizações

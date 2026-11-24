@@ -12,7 +12,7 @@ Para a documentação completa de arquitetura, regras de negócio e guia dos pr�
 1. **Configurar variáveis de ambiente (`.env`):**
    ```env
    DATABASE_URL="postgresql://postgres:1234@localhost:5432/postgres?schema=public"
-   DEVICE_API_KEY="iot-simulator-secret-2026"
+   DEVICE_API_KEY="CONFIGURE_EM_RUNTIME"
    JWT_SECRET="gere-uma-chave-longa-e-aleatoria"
    JWT_EXPIRES_IN="1h"
    SEED_ADMIN_NOME="Administrador"
