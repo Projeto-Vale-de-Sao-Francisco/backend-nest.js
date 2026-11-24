@@ -1,0 +1,98 @@
+name: Backend EC2 image
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publicar no GHCR após validar (false = somente teste)'
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - name: Nome e versão
+        id: image
+        shell: bash
+        run: |
+          echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/backend" >> "$GITHUB_OUTPUT"
+          echo "tag=sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - name: Build Linux amd64 (sem segredos)
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile.ec2
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=backend-ec2
+          cache-to: type=gha,mode=max,scope=backend-ec2
+      - name: Smoke test isolado (nenhum acesso ao Aiven)
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
+        run: |
+          set -euo pipefail
+          docker network create sivale-test
+          # Credenciais fictícias, exclusivas do banco descartável deste job.
+          docker run -d --name test-db --network sivale-test \
+            -e POSTGRES_PASSWORD=ci-only -e POSTGRES_DB=sivale postgres:17-alpine
+          for attempt in {1..60}; do
+            if docker exec test-db pg_isready -U postgres -d sivale; then break; fi
+            sleep 2
+          done
+          docker exec test-db pg_isready -U postgres -d sivale
+          docker run -d --name test-backend --network sivale-test --network-alias backend \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --cap-drop ALL --security-opt no-new-privileges \
+            -e DATABASE_URL=postgresql://postgres:ci-only@test-db:5432/sivale \
+            -e JWT_SECRET=ci-only-not-a-production-secret "$IMAGE"
+          for attempt in {1..45}; do
+            state=$(docker inspect --format '{{.State.Health.Status}}' test-backend)
+            if [ "$state" = healthy ]; then break; fi
+            sleep 2
+          done
+          test "$(docker inspect --format '{{.State.Health.Status}}' test-backend)" = healthy
+          # Outro container resolve o mesmo alias/porta que o Caddy usa.
+          docker run --rm --network sivale-test --entrypoint node "$IMAGE" \
+            -e "fetch('http://backend:3000/').then(async r=>{if(!r.ok || await r.text() !== 'Hello World!')process.exit(1)}).catch(()=>process.exit(1))"
+          docker run --rm --network none --entrypoint node "$IMAGE" \
+            -e "import('bcrypt').then(async b=>{const h=await b.hash('ci-only',4);if(!await b.compare('ci-only',h))process.exit(1)})"
+      - name: Login GHCR
+        if: ${{ inputs.publish }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publicar a imagem já testada
+        if: ${{ inputs.publish }}
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
+        run: |
+          set -euo pipefail
+          docker push "$IMAGE"
+          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE")
+          echo "BACKEND_IMAGE=$digest" >> "$GITHUB_STEP_SUMMARY"
+      - name: Limpar recursos de teste
+        if: always()
+        run: |
+          docker rm -f test-backend test-db || true
+          docker network rm sivale-test || true

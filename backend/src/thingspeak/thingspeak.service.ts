@@ -20,7 +20,7 @@ export class ThingspeakService {
   async enviarDados(temperatura: number, umidade: number) {
     const channelId = process.env.THINGSPEAK_CHANNEL_ID || '3502672';
     const writeApiKey =
-      process.env.THINGSPEAK_WRITE_API_KEY || 'GZS2ZFL9QXV1TNLD';
+      this.config.getOrThrow<string>('THINGSPEAK_WRITE_API_KEY');
 
     const resposta = await axios.get('https://api.thingspeak.com/update', {
       params: {
@@ -41,7 +41,7 @@ export class ThingspeakService {
   async buscarDados() {
     const channelId = process.env.THINGSPEAK_CHANNEL_ID || '3502672';
     const readApiKey =
-      process.env.THINGSPEAK_READ_API_KEY || 'RJY0US09YQGX0VMQ';
+      this.config.getOrThrow<string>('THINGSPEAK_READ_API_KEY');
 
     const resposta = await axios.get(
       `https://api.thingspeak.com/channels/${channelId}/feeds.json`,

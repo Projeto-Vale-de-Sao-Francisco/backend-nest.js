@@ -69,3 +69,29 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .windsurf/
 
 backend/src/generated/
+
+# Terraform: manter .terraform.lock.hcl e exemplos versionados.
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.json
+terraform-plan*.json
+*.plan
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+*.key
+*.pem
+*.p12
+*.pfx
+infra/terraform/aws/deploy/runtime.env
+infra/terraform/aws/deploy/deploy.env
