@@ -99,6 +99,7 @@ jobs:
             -e DATABASE_URL=postgresql://postgres:ci-only@test-db:5432/sivale \
             -e JWT_SECRET=ci-only-not-a-production-secret -e MERCADO_FONTES_ATIVAS= "$IMAGE"
           for attempt in {1..45}; do
+            test "$(docker inspect --format '{{.State.Running}}' test-backend)" = true
             state=$(docker inspect --format '{{.State.Health.Status}}' test-backend)
             if [ "$state" = healthy ]; then break; fi
             sleep 2

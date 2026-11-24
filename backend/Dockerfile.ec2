@@ -6,10 +6,12 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY prisma.config.ts ./
 COPY prisma ./prisma
-RUN npx prisma generate
+# Prisma infers ESM import extensions from tsconfig; it must exist at generation.
 COPY tsconfig.json tsconfig.build.json nest-cli.json ./
+RUN npx prisma generate
 COPY src ./src
 RUN NODE_OPTIONS=--max-old-space-size=4096 npm run build && npm prune --omit=dev
+RUN node --input-type=module -e "await import('./dist/generated/prisma/client.js')"
 
 FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production PORT=3000
