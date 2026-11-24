@@ -1,0 +1,22 @@
+[Unit]
+Description=SIVALE NestJS container
+Requires=docker.service
+PartOf=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/sivale/runtime.env
+ConditionPathExists=/etc/sivale/deploy.env
+ConditionPathExists=/etc/sivale/ca.pem
+
+[Service]
+EnvironmentFile=/etc/sivale/deploy.env
+ExecStartPre=-/usr/bin/docker network create sivale
+ExecStartPre=-/usr/bin/docker rm -f sivale-backend
+ExecStart=/usr/bin/docker run --rm --name sivale-backend --network sivale --network-alias backend --env-file /etc/sivale/runtime.env --env NODE_ENV=production --env PORT=3000 --env NODE_EXTRA_CA_CERTS=/run/certs/aiven-ca.pem --mount type=bind,src=/etc/sivale/ca.pem,dst=/run/certs/aiven-ca.pem,readonly --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop ALL --security-opt no-new-privileges --log-opt max-size=10m --log-opt max-file=3 ${BACKEND_IMAGE}
+ExecStop=/usr/bin/docker stop -t 25 sivale-backend
+Restart=always
+RestartSec=10
+TimeoutStopSec=40
+
+[Install]
+WantedBy=multi-user.target

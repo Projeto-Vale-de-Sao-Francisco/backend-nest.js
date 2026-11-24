@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+umask 027
+systemctl enable --now amazon-ssm-agent
+dnf install -y docker
+systemctl enable --now docker
+install -d -m 0700 /etc/sivale
+cat > /etc/systemd/system/sivale-backend.service <<'BACKEND_UNIT'
+${backend_unit}
+BACKEND_UNIT
+cat > /etc/systemd/system/sivale-proxy.service <<'PROXY_UNIT'
+${proxy_unit}
+PROXY_UNIT
+cat > /etc/sivale/Caddyfile <<'CADDYFILE'
+${caddyfile}
+CADDYFILE
+chmod 0644 /etc/sivale/Caddyfile
+systemctl daemon-reload
+# Não iniciar aplicações antes de instalar imagem, configuração e segredos.

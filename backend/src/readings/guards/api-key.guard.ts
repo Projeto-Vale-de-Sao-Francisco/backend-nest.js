@@ -14,8 +14,7 @@ export class ApiKeyGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const expectedKey =
       this.configService.get<string>('DEVICE_API_KEY') ||
-      process.env.DEVICE_API_KEY ||
-      'iot-simulator-secret-2026';
+      process.env.DEVICE_API_KEY;
 
     const providedKey =
       request.headers['x-api-key'] ||

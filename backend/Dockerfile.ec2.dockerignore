@@ -1,0 +1,19 @@
+# Allowlist: impede envio de .env, certificados e backend Python ao build.
+**
+!package.json
+!package-lock.json
+!prisma.config.ts
+!prisma/
+!prisma/**
+!tsconfig.json
+!tsconfig.build.json
+!nest-cli.json
+!src/
+!src/**
+src/generated/
+src/simulator/
+src/**/*.spec.ts
+**/.env
+**/.env.*
+**/*.pem
+**/*.key

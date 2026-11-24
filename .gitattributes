@@ -1,0 +1,5 @@
+# Arquivos consumidos no Linux devem preservar LF em checkouts Windows.
+/infra/terraform/aws/*.tftpl text eol=lf
+/infra/terraform/aws/deploy/* text eol=lf
+/backend/Dockerfile.ec2 text eol=lf
+/backend/Dockerfile.ec2.dockerignore text eol=lf

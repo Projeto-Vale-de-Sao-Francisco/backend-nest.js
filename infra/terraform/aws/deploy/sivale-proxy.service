@@ -1,0 +1,20 @@
+[Unit]
+Description=SIVALE HTTPS reverse proxy
+Requires=docker.service
+PartOf=docker.service
+Wants=sivale-backend.service network-online.target
+After=docker.service sivale-backend.service network-online.target
+ConditionPathExists=/etc/sivale/deploy.env
+
+[Service]
+EnvironmentFile=/etc/sivale/deploy.env
+ExecStartPre=-/usr/bin/docker network create sivale
+ExecStartPre=-/usr/bin/docker rm -f sivale-proxy
+ExecStart=/usr/bin/docker run --rm --name sivale-proxy --network sivale --publish 80:80 --publish 443:443 --env-file /etc/sivale/deploy.env --mount type=bind,src=/etc/sivale/Caddyfile,dst=/etc/caddy/Caddyfile,readonly --mount type=volume,src=sivale-caddy-data,dst=/data --mount type=volume,src=sivale-caddy-config,dst=/config --log-opt max-size=10m --log-opt max-file=3 ${CADDY_IMAGE}
+ExecStop=/usr/bin/docker stop -t 10 sivale-proxy
+Restart=always
+RestartSec=10
+TimeoutStopSec=25
+
+[Install]
+WantedBy=multi-user.target

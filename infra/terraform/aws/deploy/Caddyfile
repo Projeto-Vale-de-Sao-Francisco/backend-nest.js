@@ -1,0 +1,9 @@
+{
+    email {$ACME_EMAIL}
+    admin off
+}
+
+{$BACKEND_DOMAIN} {
+    encode gzip
+    reverse_proxy backend:3000
+}
