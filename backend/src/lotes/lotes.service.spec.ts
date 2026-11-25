@@ -22,7 +22,6 @@ describe('LotesService', () => {
       findUnique: ReturnType<typeof vi.fn>;
       create: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
-      aggregate: ReturnType<typeof vi.fn>;
     };
     talhao_Cultura: {
       create: ReturnType<typeof vi.fn>;
@@ -45,7 +44,6 @@ describe('LotesService', () => {
         findUnique: vi.fn().mockResolvedValue(detalhe),
         create: vi.fn().mockResolvedValue({ id: 10 }),
         update: vi.fn(),
-        aggregate: vi.fn().mockResolvedValue({ _sum: { area: 2 } }),
       },
       talhao_Cultura: {
         create: vi.fn().mockResolvedValue({ id: 20 }),
@@ -65,17 +63,25 @@ describe('LotesService', () => {
   });
 
   it('cadastra lote, plantio e previsão na mesma transação', async () => {
+    const poligono = [
+      [-9.39, -40.5],
+      [-9.39, -40.49],
+      [-9.4, -40.49],
+    ];
     const resultado = await service.create({
       nome: 'Lote MVP',
       propriedade_id: 1,
       cultura_id: 2,
       area: 3,
+      poligono,
       data_plantio: '2026-10-01',
       previsao_colheita: '2027-01-15',
       situacao: 'ativo',
-    });
+    } as Parameters<LotesService['create']>[0]);
     expect(db.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.talhao.create).toHaveBeenCalledTimes(1);
+    expect(tx.talhao.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ poligono }),
+    });
     expect(tx.talhao_Cultura.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ talhao_id: 10, cultura_id: 2 }),
     });
@@ -88,19 +94,17 @@ describe('LotesService', () => {
     expect(resultado).toEqual(detalhe);
   });
 
-  it('rejeita soma de áreas superior à área total', async () => {
-    tx.talhao.aggregate.mockResolvedValueOnce({ _sum: { area: 8 } });
-    await expect(
-      service.create({
-        nome: 'Excesso',
-        propriedade_id: 1,
-        cultura_id: 2,
-        area: 3,
-        data_plantio: '2026-10-01',
-        situacao: 'ativo',
-      }),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(tx.talhao.create).not.toHaveBeenCalled();
+  it('permite cadastrar lote com área superior à área total da propriedade', async () => {
+    const resultado = await service.create({
+      nome: 'Área ampliada',
+      propriedade_id: 1,
+      cultura_id: 2,
+      area: 11,
+      data_plantio: '2026-10-01',
+      situacao: 'ativo',
+    });
+
+    expect(resultado).toEqual(detalhe);
   });
 
   it('rejeita previsão anterior ao plantio antes de abrir transação', async () => {

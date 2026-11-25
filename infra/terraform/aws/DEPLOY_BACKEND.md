@@ -50,18 +50,19 @@ lista, sem colocar valores no Git, Terraform, Dockerfile, argumentos de build ou
 logs. A CA é montada read-only; usar `sslmode=verify-full`, sem desativar TLS nem
 referenciar caminhos da máquina local na URL. Validar TLS Aiven na etapa operacional.
 
-## GHCR via GitHub Actions
+## Validacao via GitHub Actions
 
 Recomendado: build no runner GitHub hospedado x86_64, sem usar RAM da t3.small.
-Workflow `.github/workflows/backend-ec2-image.yml`: somente disparo manual,
-`publish=false` por padrão, sem gatilhos push/tag e sem acesso AWS/Render/Aiven.
-O job usa `contents: read`, `packages: write` e GITHUB_TOKEN temporário para GHCR;
-não exige PAT de escrita ou credenciais AWS. Não usa `latest`.
+Workflow `.github/workflows/backend-ec2-image.yml`: push em `feat/backend-mvp`,
+Pull Request para `main` ou disparo manual, sem acesso AWS/Render/Aiven.
+O job usa somente `contents: read`. Nao publica no GHCR e nao pede credenciais
+de producao. Executa instalacao limpa, Prisma generate, testes unitarios e de
+contrato, build NestJS e Docker Linux AMD64.
 
-O smoke test inicia PostgreSQL descartável vazio, verifica bootstrap/GET /,
+O smoke test inicia PostgreSQL descartável vazio, verifica bootstrap/GET /auth/me (401),
 healthcheck, acesso pelo alias backend de outro container e bcrypt nativo. Não
 executa migrations nem testa funcionalidades dependentes das tabelas ou TLS Aiven.
-A publicação só ocorre depois desses testes, enviando a mesma imagem carregada.
+A rede Docker interna impede acesso externo durante o smoke test.
 
 1. Revisar e versionar apenas os arquivos pretendidos; há alterações Terraform
    preexistentes no workspace. Disponibilizar o workflow na branch padrão para
@@ -69,23 +70,17 @@ A publicação só ocorre depois desses testes, enviando a mesma imagem carregad
 2. Validar sem publicar, usando GitHub CLI autenticado no repositório:
 
 ```powershell
-gh workflow run backend-ec2-image.yml --ref SUA_BRANCH -f publish=false
+gh workflow run backend-ec2-image.yml --ref feat/backend-mvp
 gh run list --workflow backend-ec2-image.yml --limit 5
 gh run watch ID_DA_EXECUCAO --exit-status
 ```
 
-3. Após validação, publicar explicitamente:
-
-```powershell
-gh workflow run backend-ec2-image.yml --ref SUA_BRANCH -f publish=true
-gh run list --workflow backend-ec2-image.yml --limit 5
-gh run watch ID_DA_EXECUCAO --exit-status
-```
+3. Publicacao exige uma etapa futura separada e autorizada. Este workflow
+   apenas carrega a imagem no runner e a testa; nao exporta nem publica imagens.
 
 Nome calculado em minúsculas: `ghcr.io/OWNER/REPO/backend:sha-COMMIT_COMPLETO`.
-O resumo do job informa `BACKEND_IMAGE=ghcr.io/.../backend@sha256:...`; usar esse
-digest no deploy. A tag pode ser sobrescrita por novo build do mesmo commit;
-o digest identifica precisamente a imagem aprovada. Guardar também o digest anterior.
+Esse nome e usado apenas localmente no runner nesta etapa. Em uma futura
+publicacao, obter o digest do registro e guardar tambem o digest anterior.
 
 Confirmar políticas Actions/Packages da organização e acesso do repositório ao
 pacote se ele já existir. Manter privado por padrão. Imagem pública permite pull
@@ -140,10 +135,10 @@ done
 test "$health" = healthy
 systemctl enable --now sivale-proxy.service
 exit
-curl --fail https://api.seu-dominio.example/
+curl --silent --output /dev/null --write-out '%{http_code}\n' https://api.seu-dominio.example/auth/me
 ```
 
-Resultado esperado: healthy e `Hello World!`. `GET /` testa processo, não readiness
+Resultado esperado: healthy e HTTP 401 sem token. `GET /auth/me` testa processo, nao readiness
 contínua do banco. `unhealthy` não reinicia automaticamente via systemd. Validar
 uma leitura autenticada e CORS com origem real antes de direcionar o frontend.
 Não imprimir runtime.env, docker inspect completo ou logs sem revisão de segredos.

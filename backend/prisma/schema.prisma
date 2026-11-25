@@ -144,6 +144,7 @@ model Talhao {
   area           Float
   latitude       Float?
   longitude      Float?
+  poligono       Json?
   status         String
 
   propriedade  Propriedade      @relation(fields: [propriedade_id], references: [id])
